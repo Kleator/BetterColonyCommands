@@ -26,7 +26,7 @@
 			]
 		},
 		{ "version": "1.0.13", "notes": [
-				"fixed unquoted multi-word player names (e.g. '/groups Bryce Walker') being cut off at the first space and failing with 'player not found' - the 1.0.12 fix only helped once a name reached PlayerHelper, but the command's own regex was already truncating it before that; fixed for /groups, /kick, /list, /lastseen, /killplayer, /killnpcs, /unmute, /tpa, /antigrief always, and for /ban, /mute, /rpban, /jail when a numeric time value is given to anchor on",
+				"fixed unquoted multi-word player names (e.g. '/groups Aldric Stormvale') being cut off at the first space and failing with 'player not found' - the 1.0.12 fix only helped once a name reached PlayerHelper, but the command's own regex was already truncating it before that; fixed for /groups, /kick, /list, /lastseen, /killplayer, /killnpcs, /unmute, /tpa, /antigrief always, and for /ban, /mute, /rpban, /jail when a numeric time value is given to anchor on",
 				"fixed ColonyNameGuard never re-checking a colony's current name against the blacklist if the name hadn't changed since it was last accepted - meant a colony that already existed before a word was added to blacklistedwords.json (or before /bcreload) stayed unflagged forever instead of being corrected on the next scan"
 			]
 		},

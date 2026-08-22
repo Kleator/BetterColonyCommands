@@ -20,7 +20,7 @@ namespace ColonyCommands
       }
 
       // tried first: a numeric jailtime unambiguously marks where the (possibly multi-word,
-      // unquoted) player name ends, e.g. "/jail Bryce Walker 30 being toxic"
+      // unquoted) player name ends, e.g. "/jail Aldric Stormvale 30 being toxic"
       var m = Regex.Match(chattext, @"/jail (?<player>['].+[']|.+?) (?<jailtime>[0-9]+) (?<reason>.+)$");
       if (!m.Success) {
         // no jailtime given - nothing left to disambiguate a multi-word name from the reason,
