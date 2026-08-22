@@ -149,6 +149,6 @@ Colony Survival 0.15.1.0, 0.15.1.1, 0.18.0.0.
 [h1]Links[/h1]
 
 [list]
-[*] Source code / issue tracker: [ADD YOUR GITHUB URL HERE]
+[*] Source code / issue tracker: https://github.com/Kleator/BetterColonyCommands
 [*] Full changelog: see the Change Notes on this Workshop page, or CHANGELOG.md in the source repository
 [/list]
