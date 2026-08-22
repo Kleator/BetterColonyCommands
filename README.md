@@ -50,6 +50,8 @@ Use **/lastseen [playername]** to view the timestamp for a player.
 
 Use **/top time** to view a top ranking with the most time played.
 
+If a tracked gap since a player's last recorded activity would add more than 24 hours of playtime in one go, it's discarded (logged as a warning) instead of being added - this guards against implausible totals from a connection that dropped mid-load or similar, rather than crediting a stale timestamp as played time. This only prevents *future* bad gaps; an already-corrupted total in `playeractivity.json` needs a manual edit (that file lives at `gamedata/savegames/<worldname>/playeractivity.json`).
+
 ## Announcements
 
 This mods adds a welcome message and automatic announcements to the game.

@@ -17,21 +17,43 @@ namespace ColonyCommands
 		}
 		static Dictionary<string, StatsDataEntry> PlayerStats = new Dictionary<string, StatsDataEntry>();
 
+		// Generous upper bound for a single tracked gap (autosave-to-autosave or connect-to-disconnect).
+		// Real gaps are always far shorter than this (autosave intervals are minutes, not hours, and a
+		// human play session rarely exceeds a day). A larger computed gap means lastSeen was stale -
+		// e.g. from a much earlier session - not real playtime, so it's discarded instead of corrupting
+		// secondsPlayed. This is what previously let disconnected/reconnecting players rack up
+		// implausible totals (hundreds/thousands of hours): a player is added to Players.ConnectedPlayers
+		// (and so picked up by OnAutoSaveWorld, or by OnPlayerDisconnected if the connection drops before
+		// finishing) at OnPlayerConnectedEarly time, but lastSeen only used to get reset at
+		// OnPlayerConnectedLate - which can fire noticeably later (client still loading) or, if the
+		// connection never completes, not at all. Any autosave or disconnect landing in that gap computed
+		// "now minus their last session's lastSeen", which could be days or weeks old.
+		const double MAX_TRACKED_GAP_SECONDS = 24.0 * 60.0 * 60.0;
+
+
+		public static void OnPlayerConnectedEarly(Players.Player player)
+		{
+			ResetLastSeen(player);
+		}
+
 
 		public static void OnPlayerConnectedLate(Players.Player player)
 		{
-			var now = DateTime.Now.ToString();
+			ResetLastSeen(player);
+		}
+
+
+		static void ResetLastSeen(Players.Player player)
+		{
 			var stats = GetOrCreateStats(player.ID.ToStringReadable());
-			stats.lastSeen = now;
+			stats.lastSeen = DateTime.Now.ToString();
 		}
 
 
 		public static void OnPlayerDisconnected(Players.Player player)
 		{
-			var now = DateTime.Now;
 			var stats = GetOrCreateStats(player.ID.ToStringReadable());
-			stats.secondsPlayed += (long)now.Subtract(DateTime.Parse(stats.lastSeen)).TotalSeconds;
-			stats.lastSeen = now.ToString();
+			AddElapsedSeconds(stats, DateTime.Now);
 		}
 
 
@@ -41,10 +63,24 @@ namespace ColonyCommands
 			for (var c = 0; c < Players.ConnectedPlayers.Count; c++) {
 				Players.Player player = Players.ConnectedPlayers[c];
 				var stats = GetOrCreateStats(player.ID.ToStringReadable());
-				stats.secondsPlayed += (long)now.Subtract(DateTime.Parse(stats.lastSeen)).TotalSeconds;
-				stats.lastSeen = now.ToString();
+				AddElapsedSeconds(stats, now);
 			}
 			Save();
+		}
+
+
+		static void AddElapsedSeconds(StatsDataEntry stats, DateTime now)
+		{
+			DateTime lastSeen;
+			if (DateTime.TryParse(stats.lastSeen, out lastSeen)) {
+				double elapsedSeconds = now.Subtract(lastSeen).TotalSeconds;
+				if (elapsedSeconds > 0 && elapsedSeconds <= MAX_TRACKED_GAP_SECONDS) {
+					stats.secondsPlayed += (long)elapsedSeconds;
+				} else if (elapsedSeconds > MAX_TRACKED_GAP_SECONDS) {
+					Log.WriteWarning($"ActivityTracker: discarded a {elapsedSeconds / 3600.0:F1}h gap (stale lastSeen) instead of adding it to playtime");
+				}
+			}
+			stats.lastSeen = now.ToString();
 		}
 
 

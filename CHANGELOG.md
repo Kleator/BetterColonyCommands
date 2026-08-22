@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.17
+
+- Fixed implausibly high `/top time` and `/mtop time` values (players showing hundreds or thousands of hours). Root cause: a player is added to the game's connected-players list (which `OnAutoSaveWorld` and `OnPlayerDisconnected` both read) as soon as their connection starts, but `ActivityTracker` only reset that player's session-start timestamp once the connection fully finished loading (`OnPlayerConnectedLate`, which can fire noticeably later, or never if the connection drops mid-load). Any autosave tick, or a dropped connection, landing in that gap computed "now minus their *previous* session's last-seen timestamp" - potentially days or weeks - and added the whole thing as playtime.
+- Fixed by resetting the session-start timestamp as early as possible (`OnPlayerConnectedEarly`, which fires the moment the player is added to the connected list, closing the gap), and by discarding (with a console warning) any single tracked gap over 24 hours as a safety net, since a real gap between two tracked points is always far shorter than that.
+- This only prevents new bad data going forward - an already-corrupted total in an existing `playeractivity.json` needs a manual edit.
+
 ## 1.0.16
 
 - Fixed `{rolename:top}`/`{rolename:bottom}`/`{rolename:<group>}` double-wrapping a group's `prefix` in `[brackets]`. A `prefix` that already includes its own markup (e.g. `"<b>[Owner]</b>"`, common when embedding icons/colors directly) came out as `[<b>[Owner]</b>]`. Brackets are no longer added automatically - put them in the `prefix` value itself (e.g. `"[God]"`) if you want them. Updated `chatcolors.example.json`'s prefixes to include their own brackets so its default look is unchanged.

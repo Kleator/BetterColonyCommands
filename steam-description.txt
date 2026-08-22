@@ -1,55 +1,19 @@
 [b][u]Better Colony Commands[/u][/b]
 
-Server-side admin, moderation and quality-of-life mod for Colony Survival. Anti-grief protection, a jail system, colony/banner tools, chat customization, teleport requests and a long list of admin commands - built for server owners who want real moderation tools without babysitting the server around the clock.
+Server-side admin, moderation and QoL mod for Colony Survival: anti-grief protection, a jail system, colony/banner tools, chat customization, teleport requests and a long list of admin commands - real moderation without babysitting the server.
 
-Maintained by Kleator from version 1.0.7 onward. Originally developed by Adrenalynn, continued through version 1.0.6 by Xell. See Credits below.
+Maintained by Kleator since v1.0.7. Originally by Adrenalynn, continued through v1.0.6 by Xell.
 
 [hr][/hr]
 
 [h1]Features[/h1]
 
-[h2]Anti-Grief Protection[/h2]
 [list]
-[*] Protects colony/banner areas from unwanted building and digging by non-members
-[*] Configurable protection range and punishment thresholds (warn, kick, ban, jail) for killing colonists
-[*] Custom protection areas independent of banners
-[*] Delayed join notice with an optional popup, so new players see the rules even with a collapsed chat
-[/list]
-
-[h2]Jail System[/h2]
-[list]
-[*] Send griefers or rule-breakers to a defined jail area, with automatic release after their time is up
-[*] Escape attempts extend jail time automatically
-[*] Optionally restores a player's actual prior permission group(s) on release, and can grant/revoke extra groups while jailed or after release
-[*] Full jail history log per player
-[/list]
-
-[h2]Colony Tools[/h2]
-[list]
-[*] Admins can rename any colony via its nearest banner, regardless of ownership
-[*] Optional regex-based colony name blacklist: automatically reverts a colony name created or renamed to something on the list, with the owner warned in chat and the exact rule logged to console
-[*] Purge banners/colonies by inactivity, by player, or in bulk
-[*] Colonist-per-colony cap based on player permission tier and difficulty
-[/list]
-
-[h2]Chat Customization[/h2]
-[list]
-[*] Fully configurable chat line layout via a template string with placeholders for name, role tag, roleplay marker and message
-[*] Per-permission-group colors and custom role tags/prefixes (support full rich-text markup, icons included)
-[*] Role-colored player names used consistently across every command's output, not just live chat
-[*] Optional roleplay mode with a togglable [RP] marker and roleplay-specific bans
-[/list]
-
-[h2]Player & Admin Utilities[/h2]
-[list]
-[*] /tpa, /tpaccept, /tpadeny - teleport requests with an accept countdown and request timeout
-[*] /groups - see a player's assigned permission groups
-[*] /warp, /warpbanner, /warpspawn, /warpplace, travel paths
-[*] /top, /mtop - player and colony leaderboards
-[*] /ban, /kick, /mute, /killplayer, /killnpcs, /inactive - works for offline players by SteamID or nickname where it makes sense
-[*] /trade, /trash, /itemid, /online, /lastseen, /list, /stuck, /serverpop
-[*] /war - lightweight player/colony war mode for consenting PvP
-[*] /bcreload - reload every config file live, no server restart needed
+[*] [b]Anti-Grief:[/b] banner protection, configurable punishment thresholds, popup join notice
+[*] [b]Jail:[/b] auto-release, escape attempts extend time, restores prior role(s), full history log
+[*] [b]Colony Tools:[/b] admin rename, regex name blacklist with auto-revert, bulk/inactivity purging, colonist cap
+[*] [b]Chat:[/b] configurable line layout, per-group colors/role tags, roleplay mode
+[*] [b]Utilities:[/b] teleport requests, warps, leaderboards, trade, offline-capable moderation, live config reload
 [/list]
 
 [hr][/hr]
@@ -61,63 +25,64 @@ Maintained by Kleator from version 1.0.7 onward. Originally developed by Adrenal
 [h2]Anti-Grief & Moderation[/h2]
 [table]
 [tr][th]Command[/th][th]Permission[/th][th]Description[/th][/tr]
-[tr][td]/antigrief grant|revoke {player}[/td][td](none)[/td][td]Grants/revokes a player's permission to build/dig in your banner area[/td][/tr]
-[tr][td]/antigrief area ...[/td][td](none)[/td][td]Sets a custom protection area independent of banners[/td][/tr]
-[tr][td]/customarea[/td][td](none)[/td][td]Shows the protection area you're standing in, or the nearest one[/td][/tr]
-[tr][td]/graceperiod {minutes}[/td][td]antigrief.setgraceperiod[/td][td]Sets how long new joins are protected after server start[/td][/tr]
-[tr][td]/colonycap [limit][/td][td](none) to view, colonycap to change[/td][td]Shows or sets the colonist-per-colony limit[/td][/tr]
-[tr][td]/ban {player} {days} {reason}[/td][td]ban[/td][td]Bans a player by SteamID or nickname, online or offline[/td][/tr]
-[tr][td]/banlog[/td][td]ban[/td][td]Shows the ban history log[/td][/tr]
-[tr][td]/kick {player}[/td][td]kick[/td][td]Kicks a player from the server[/td][/tr]
-[tr][td]/mute {player} {minutes}[/td][td]mute[/td][td]Mutes a player's chat for a set duration[/td][/tr]
-[tr][td]/unmute {player}[/td][td]mute[/td][td]Removes an active mute[/td][/tr]
-[tr][td]/killplayer [player][/td][td]killplayer (.self to allow on yourself)[/td][td]Kills the given player, or yourself[/td][/tr]
-[tr][td]/killnpcs [player][/td][td]killnpcs (.self to allow on your own)[/td][td]Kills all colonists belonging to the given player[/td][/tr]
-[tr][td]/noflight {player}[/td][td]noflight[/td][td]Toggles disabling flight mode for a player[/td][/tr]
-[tr][td]/purgebanner ...[/td][td]purgebanner / purgeallbanner[/td][td]Removes banners/colonies - nearest, by player, in bulk, or by inactivity[/td][/tr]
-[tr][td]/inactive {days}[/td][td]inactive[/td][td]Lists players inactive for at least the given days[/td][/tr]
-[tr][td]/god[/td][td]god[/td][td]Toggles your own super-permission[/td][/tr]
-[tr][td]/drain[/td][td]drain[/td][td]Drains a small lake/puddle, up to 5k blocks[/td][/tr]
+[tr][td]/antigrief grant|revoke {player}[/td][td](none)[/td][td]Grant/revoke build access to your banner area[/td][/tr]
+[tr][td]/antigrief area ...[/td][td](none)[/td][td]Custom protection area, independent of banners[/td][/tr]
+[tr][td]/customarea[/td][td](none)[/td][td]Shows the nearest protection area[/td][/tr]
+[tr][td]/graceperiod {minutes}[/td][td]mods.scarabol.commands.antigrief.setgraceperiod[/td][td]Grief-punishment protection after server start[/td][/tr]
+[tr][td]/colonycap [limit][/td][td](none) to view, mods.scarabol.commands.colonycap to change[/td][td]View/set colonist-per-colony limit[/td][/tr]
+[tr][td]/ban {player} {days} {reason}[/td][td]mods.scarabol.commands.ban[/td][td]Bans by SteamID or nickname, online or offline[/td][/tr]
+[tr][td]/banlog[/td][td]mods.scarabol.commands.ban[/td][td]Ban history log[/td][/tr]
+[tr][td]/kick {player}[/td][td]mods.scarabol.commands.kick[/td][td]Kicks a player[/td][/tr]
+[tr][td]/mute, /unmute {player}[/td][td]mods.scarabol.commands.mute[/td][td]Mutes/unmutes a player's chat[/td][/tr]
+[tr][td]/killplayer [player][/td][td]mods.scarabol.commands.killplayer (add .self for use on yourself)[/td][td]Kills the given player, or yourself[/td][/tr]
+[tr][td]/killnpcs [player][/td][td]mods.scarabol.commands.killnpcs (add .self for your own)[/td][td]Kills a player's colonists[/td][/tr]
+[tr][td]/noflight {player}[/td][td]mods.scarabol.commands.noflight[/td][td]Toggles flight mode for a player[/td][/tr]
+[tr][td]/purgebanner (nearest/colony/player)[/td][td]mods.scarabol.purgebanner[/td][td]Removes the nearest banner, a whole colony, or a player's banners[/td][/tr]
+[tr][td]/purgebanner all|days ...[/td][td]mods.scarabol.purgeallbanner[/td][td]Bulk purge by range or inactivity[/td][/tr]
+[tr][td]/inactive {days}[/td][td]mods.scarabol.commands.inactive[/td][td]Lists inactive players[/td][/tr]
+[tr][td]/god[/td][td]mods.scarabol.commands.god[/td][td]Toggles your own super-permission[/td][/tr]
+[tr][td]/drain[/td][td]mods.scarabol.commands.drain[/td][td]Drains a small lake/puddle[/td][/tr]
 [/table]
 
 [h2]Colony & Banner[/h2]
 [table]
 [tr][th]Command[/th][th]Permission[/th][th]Description[/th][/tr]
-[tr][td]/bannername[/td][td](none)[/td][td]Shows the name/owner of the closest banner that isn't yours[/td][/tr]
-[tr][td]/setcolonyname {new name}[/td][td]setcolonyname[/td][td]Renames the closest colony, regardless of ownership[/td][/tr]
-[tr][td]/list {player}[/td][td]listplayer[/td][td]Lists a player's colonies and last-seen time[/td][/tr]
-[tr][td]/top [c|colony|p|player] {score|food|colonists|time|item}[/td][td](none)[/td][td]Shows the top-10 leaderboard[/td][/tr]
-[tr][td]/mtop {score|food|colonists|time|item}[/td][td](none)[/td][td]Same as /top, always includes your own rank[/td][/tr]
-[tr][td]/total {itemname}[/td][td](none)[/td][td]Shows the total amount of an item across the server[/td][/tr]
+[tr][td]/bannername[/td][td](none)[/td][td]Name/owner of the closest banner[/td][/tr]
+[tr][td]/setcolonyname {new name}[/td][td]mods.scarabol.commands.setcolonyname[/td][td]Renames the closest colony, any owner[/td][/tr]
+[tr][td]/list {player}[/td][td]mods.scarabol.commands.listplayer[/td][td]A player's colonies and last-seen time[/td][/tr]
+[tr][td]/top, /mtop [type][/td][td](none)[/td][td]Top-10 leaderboard (mtop always includes you)[/td][/tr]
+[tr][td]/total {itemname}[/td][td](none)[/td][td]Total amount of an item server-wide[/td][/tr]
 [/table]
 
 [h2]Jail System[/h2]
 [table]
 [tr][th]Command[/th][th]Permission[/th][th]Description[/th][/tr]
-[tr][td]/setjail {x y z|range}[/td][td]setjailposition[/td][td]Sets the jail location/size at your position[/td][/tr]
-[tr][td]/jail {player} [time] {reason}[/td][td]jail[/td][td]Sends a player to jail[/td][/tr]
-[tr][td]/jailrelease {player}[/td][td]jail[/td][td]Releases a player from jail early[/td][/tr]
-[tr][td]/jailrec [player][/td][td]jail[/td][td]Shows jail history[/td][/tr]
-[tr][td]/jailtime[/td][td](none)[/td][td]Shows your own remaining jail time[/td][/tr]
-[tr][td]/jailvisit, /jailleave[/td][td](none)[/td][td]Visit the jail as an observer, or return[/td][/tr]
+[tr][td]/setjail {x y z|range}[/td][td]mods.scarabol.commands.setjailposition[/td][td]Sets jail location/size at your position[/td][/tr]
+[tr][td]/jail {player} [time] {reason}[/td][td]mods.scarabol.commands.jail[/td][td]Sends a player to jail[/td][/tr]
+[tr][td]/jailrelease {player}[/td][td]mods.scarabol.commands.jail[/td][td]Early release[/td][/tr]
+[tr][td]/jailrec [player][/td][td]mods.scarabol.commands.jail[/td][td]Jail history[/td][/tr]
+[tr][td]/jailtime[/td][td](none)[/td][td]Your remaining jail time[/td][/tr]
+[tr][td]/jailvisit, /jailleave[/td][td](none)[/td][td]Visit jail as observer, or return[/td][/tr]
 [/table]
 
 [h2]Chat, Teleport & Utility[/h2]
 [table]
 [tr][th]Command[/th][th]Permission[/th][th]Description[/th][/tr]
-[tr][td]/rp on|off[/td][td](none)[/td][td]Toggles your [RP] roleplay marker[/td][/tr]
-[tr][td]/rpban {player} {duration} {reason}[/td][td]roleplayban[/td][td]Bans a player from using /rp[/td][/tr]
-[tr][td]/whisper {player} {message}[/td][td](none)[/td][td]Sends a private message to a player[/td][/tr]
-[tr][td]/tpa {player}[/td][td]tpa.self[/td][td]Sends a teleport request, expires after 60s[/td][/tr]
-[tr][td]/tpaccept, /tpadeny[/td][td](none)[/td][td]Accept (3s countdown) or deny a teleport request[/td][/tr]
-[tr][td]/warp {player} [other][/td][td]warp.self / warp.player[/td][td]Warps to (or warps another player to) a position[/td][/tr]
-[tr][td]/warpbanner [name][/td][td]warp.banner.self / warp.banner[/td][td]Warps to your closest colony, or one by name[/td][/tr]
-[tr][td]/warpspawn [player][/td][td]warp.spawn.self / warp.spawn[/td][td]Warps to (or warps another player to) spawn[/td][/tr]
-[tr][td]/groups {player}[/td][td]groups[/td][td]Lists a player's assigned permission groups[/td][/tr]
-[tr][td]/online [id][/td][td](none)[/td][td]Lists online players[/td][/tr]
-[tr][td]/lastseen {player}[/td][td](none)[/td][td]Shows last-seen time and playtime[/td][/tr]
-[tr][td]/trade {player} {item} {amount}[/td][td]trade[/td][td]Transfers items to another player's stockpile[/td][/tr]
-[tr][td]/bcreload[/td][td]bcreload[/td][td]Reloads all config files live, no restart[/td][/tr]
+[tr][td]/rp on|off[/td][td](none)[/td][td]Toggles your [RP] marker[/td][/tr]
+[tr][td]/rpban {player} {duration} {reason}[/td][td]mods.scarabol.commands.roleplayban[/td][td]Bans a player from /rp[/td][/tr]
+[tr][td]/whisper {player} {message}[/td][td](none)[/td][td]Private message[/td][/tr]
+[tr][td]/tpa {player}[/td][td]mods.scarabol.commands.tpa.self[/td][td]Teleport request, expires after 60s[/td][/tr]
+[tr][td]/tpaccept, /tpadeny[/td][td](none)[/td][td]Accept (3s countdown) or deny[/td][/tr]
+[tr][td]/warp {player}[/td][td]mods.scarabol.commands.warp.self[/td][td]Warp to a player's position[/td][/tr]
+[tr][td]/warp {player} {other}[/td][td]mods.scarabol.commands.warp.player[/td][td]Warp another player to a position[/td][/tr]
+[tr][td]/warpbanner [name][/td][td]mods.scarabol.commands.warp.banner.self (own) / .warp.banner (any)[/td][td]Warp to your (or a named) colony[/td][/tr]
+[tr][td]/warpspawn[/td][td]mods.scarabol.commands.warp.spawn.self[/td][td]Warp yourself to spawn[/td][/tr]
+[tr][td]/warpspawn {player}[/td][td]mods.scarabol.commands.warp.spawn[/td][td]Warp another player to spawn[/td][/tr]
+[tr][td]/groups {player}[/td][td]mods.scarabol.commands.groups[/td][td]A player's permission groups[/td][/tr]
+[tr][td]/online [id][/td][td](none)[/td][td]Online players[/td][/tr]
+[tr][td]/lastseen {player}[/td][td](none)[/td][td]Last-seen time and playtime[/td][/tr]
+[tr][td]/trade {player} {item} {amount}[/td][td][noparse]mods.scarabol.commands.trade[/noparse][/td][td]Send items to another player[/td][/tr]
+[tr][td]/bcreload[/td][td]mods.scarabol.commands.bcreload[/td][td]Reloads all config files live[/td][/tr]
 [/table]
 
 [hr][/hr]

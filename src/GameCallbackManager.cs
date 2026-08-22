@@ -17,6 +17,7 @@ namespace ColonyCommands {
 		IOnPlayerClicked,
 		IOnTryChangeBlock,
 		IOnNPCHit,
+		IOnPlayerConnectedEarly,
 		IOnPlayerConnectedLate,
 		IOnPlayerMoved2,
 		IOnAutoSaveWorld,
@@ -73,6 +74,12 @@ namespace ColonyCommands {
 		public void OnPlayerPushedNetworkUIButton(ButtonPressCallbackData data)
 		{
 			AntiGrief.OnPlayerPushedNetworkUIButton(data);
+		}
+
+
+		public void OnPlayerConnectedEarly(Players.Player player)
+		{
+			ActivityTracker.OnPlayerConnectedEarly(player);
 		}
 
 

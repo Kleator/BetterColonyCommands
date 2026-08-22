@@ -2,7 +2,7 @@
 {
 	"name" : "Better Colony Commands",
 	"description" : "anti-grief protection and admin commands",
-	"version" : "1.0.16",
+	"version" : "1.0.17",
 	"dllpath" : "ColonyCommands.dll",
 	"isoptional" : true,
 	"enableddefault" : true,
@@ -12,6 +12,11 @@
 		"0.18.0.0"
 	],
 	"patchnotes": [
+		{ "version": "1.0.17", "notes": [
+				"fixed implausibly high /top time and /mtop time values (e.g. thousands of hours) for some players - a player is added to the game's connected-players list (picked up by the autosave/disconnect playtime tracking) before this mod's activity tracker resets their session start time, so a connection that dropped mid-load, or an autosave landing in that gap, could credit them with the entire time since their previous session as 'played'",
+				"now resets the session start time as early as possible (OnPlayerConnectedEarly), and any single tracked gap over 24 hours is discarded instead of added to playtime, as a safety net against stale timestamps"
+			]
+		},
 		{ "version": "1.0.16", "notes": [
 				"{rolename:top}/{rolename:bottom}/{rolename:<group>} no longer auto-wrap a group's prefix in [brackets] - a prefix like \"<b>[Owner]</b>\" was being double-bracketed to \"[<b>[Owner]</b>]\"; brackets are now entirely up to the prefix value itself, so include them there (e.g. \"[God]\") if wanted",
 				"updated chatcolors.example.json's prefixes to include their own brackets to match"
