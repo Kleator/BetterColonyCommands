@@ -3,3 +3,8 @@ obj/
 *.zip
 *.user
 .claude/
+
+# Steam Workshop publishing materials - not part of the mod itself
+steam-page-picture1.png
+steam-changelog.txt
+steam-description.txt
