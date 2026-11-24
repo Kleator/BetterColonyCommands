@@ -21,7 +21,7 @@ namespace ColonyCommands
 
       var m = Regex.Match(chattext, @"/jailrelease (?<player>.+)");
       if (!m.Success) {
-        Chat.Send(causedBy, "Syntax error, use /jailrelease <player>");
+        BccChat.Send(causedBy, "Syntax error, use /jailrelease <player>");
         return true;
       }
 
@@ -29,18 +29,18 @@ namespace ColonyCommands
       string targetName = m.Groups["player"].Value;
       string error;
       if (!PlayerHelper.TryGetPlayer(targetName, out target, out error, true)) {
-        Chat.Send(causedBy, $"Could not find player {targetName}: {error}");
+        BccChat.Send(causedBy, $"Could not find player {targetName}: {error}");
         return true;
       }
 
       if (!JailManager.IsPlayerJailed(target)) {
-        Chat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is currently not in jail");
+        BccChat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is currently not in jail");
         return true;
       }
 
       JailManager.releasePlayer(target, causedBy);
-      Chat.Send(causedBy, $"Released {ChatColors.GetDisplayName(target)} from jail");
-      Chat.Send(target, $"<color=yellow>{ChatColors.GetDisplayName(causedBy)} released you from jail</color>");
+      BccChat.Send(causedBy, $"Released {ChatColors.GetDisplayName(target)} from jail");
+      BccChat.Send(target, $"<color=yellow>{ChatColors.GetDisplayName(causedBy)} released you from jail</color>");
 
       return true;
     }

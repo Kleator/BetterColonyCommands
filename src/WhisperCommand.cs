@@ -16,19 +16,19 @@ namespace ColonyCommands
 			}
 			var m = Regex.Match(chattext, @"/((w)|(whisper)) (?<targetplayername>['].+[']|[^ ]+) (?<message>.+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /w [player] [message] or /whisper [player] [message]");
+				BccChat.Send(causedBy, "Syntax: /w [player] [message] or /whisper [player] [message]");
 				return true;
 			}
 			var targetPlayerName = m.Groups["targetplayername"].Value;
 			Players.Player targetPlayer;
 			string error;
 			if (!PlayerHelper.TryGetPlayer(targetPlayerName, out targetPlayer, out error)) {
-				Chat.Send(causedBy, $"Could not find target player '{targetPlayerName}'; {error}");
+				BccChat.Send(causedBy, $"Could not find target player '{targetPlayerName}'; {error}");
 				return true;
 			}
 			var message = m.Groups["message"].Value;
-			Chat.Send(targetPlayer, $"<color=#00ffff>From [{ChatColors.GetDisplayName(causedBy)}]: {message}</color>");
-			Chat.Send(causedBy, $"<color=#00ffff>To [{ChatColors.GetDisplayName(targetPlayer)}]: {message}</color>");
+			BccChat.Send(targetPlayer, $"<color=#00ffff>From [{ChatColors.GetDisplayName(causedBy)}]: {message}</color>");
+			BccChat.Send(causedBy, $"<color=#00ffff>To [{ChatColors.GetDisplayName(targetPlayer)}]: {message}</color>");
 			return true;
 		}
 	}

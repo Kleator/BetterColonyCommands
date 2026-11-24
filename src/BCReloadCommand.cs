@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using Pipliz;
 using Chatting;
@@ -28,11 +28,13 @@ namespace ColonyCommands
 			TravelManager.Load();
 			ColonyNameGuard.ReloadConfig();
 			JailManager.ReloadConfig();
+			BccSettingsManager.Load();
+			UiPreferences.Load();
 			if (File.Exists(Path.Combine("gamedata", "savegames", ServerManager.WorldName, "announcements.json"))) {
 				Announcements.Load();
 			}
 
-			Chat.Send(causedBy, "<color=yellow>BetterColonyCommands: config reloaded (antigrief-config.json, chatcolors.json, travelpaths.json, blacklistedwords.json, jail-config.json, announcements.json)</color>");
+			BccChat.Send(causedBy, "<color=yellow>BetterColonyCommands: config reloaded (antigrief-config.json, chatcolors.json, travelpaths.json, blacklistedwords.json, jail-config.json, announcements.json, bcc-settings.json, bcc-playersettings.json)</color>");
 			Log.Write($"{causedBy.Name} reloaded BetterColonyCommands configuration via /bcreload");
 			return true;
 		}

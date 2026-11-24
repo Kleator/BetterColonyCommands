@@ -27,6 +27,12 @@ namespace ColonyCommands
 			if (splits.Count == 0 || !splits[0].Equals("/announcements")) {
 				return false;
 			}
+			// without arguments (or "/announcements ui"): the announcements window, if allowed
+			if ((splits.Count == 1 || splits[1].Equals("ui")) && UiAnnouncementPages.CanEdit(causedBy) && UiPreferences.ServerAllowsWindows
+				&& !UiPreferences.IsServerExcluded("/announcements") && !BccChat.IsCapturing(causedBy)) {
+				UiManager.OpenNamed(causedBy, "announce", !UiManager.PushMode);
+				return true;
+			}
 			if (splits.Count == 1 || splits[1].Equals("list")) {
 				ListCommand(causedBy);
 				return true;
@@ -58,7 +64,7 @@ namespace ColonyCommands
 					WelcomeCommand(causedBy, chattext.Substring(WELCOME_PREFIX.Length).Trim());
 					break;
 				default:
-					Chat.Send(causedBy, "Syntax: /announcements {add|remove|edit|move|enable|disable|interval} [params...]");
+					BccChat.Send(causedBy, "Syntax: /announcements {add|remove|edit|move|enable|disable|interval} [params...]");
 					break;
 			}
 			return true;
@@ -74,9 +80,9 @@ namespace ColonyCommands
 				msg = Announcements.ListEnabledAnnouncements();
 			}
 			if (msg.Length > 0) {
-				Chat.Send(causedBy, $"Server Announcements:\n{msg}");
+				BccChat.Send(causedBy, $"Server Announcements:\n{msg}");
 			} else {
-				Chat.Send(causedBy, "No announcements");
+				BccChat.Send(causedBy, "No announcements");
 			}
 		}
 
@@ -87,7 +93,7 @@ namespace ColonyCommands
 				return;
 			}
 			Announcements.AddAnnouncement(param);
-			Chat.Send(causedBy, "New announcement placed next");
+			BccChat.Send(causedBy, "New announcement placed next");
 		}
 
 
@@ -101,7 +107,7 @@ namespace ColonyCommands
 				return;
 			}
 			Announcements.RemoveAnnouncement(Index);
-			Chat.Send(causedBy, $"Removed announcement {Index} from queue");
+			BccChat.Send(causedBy, $"Removed announcement {Index} from queue");
 		}
 
 
@@ -112,18 +118,18 @@ namespace ColonyCommands
 			}
 			var m = Regex.Match(param, @"A?(?<index>\d+) (?<text>.+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, $"Params didn't match, use {EDIT_PREFIX} A[index] [text]");
+				BccChat.Send(causedBy, $"Params didn't match, use {EDIT_PREFIX} A[index] [text]");
 				return;
 			}
 			string StrIndex = m.Groups["index"].Value;
 			int Index;
 			if (!int.TryParse(StrIndex, out Index)) {
-				Chat.Send(causedBy, $"Could not parse given parameter '{StrIndex}' as index number");
+				BccChat.Send(causedBy, $"Could not parse given parameter '{StrIndex}' as index number");
 				return;
 			}
 			string Text = m.Groups["text"].Value;
 			Announcements.ChangeAnnouncement(Index, Text);
-			Chat.Send(causedBy, $"Changed announcement {Index}");
+			BccChat.Send(causedBy, $"Changed announcement {Index}");
 		}
 
 
@@ -134,23 +140,23 @@ namespace ColonyCommands
 			}
 			var m = Regex.Match(param, @"A?(?<index>\d+) A?(?<newindex>\d+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, $"Params didn't match, use {EDIT_PREFIX} A[index] [newindex]");
+				BccChat.Send(causedBy, $"Params didn't match, use {EDIT_PREFIX} A[index] [newindex]");
 				return;
 			}
 			string StrIndex = m.Groups["index"].Value;
 			int Index;
 			if (!int.TryParse (StrIndex, out Index)) {
-				Chat.Send(causedBy, $"Could not parse given parameter '{StrIndex}' as index number");
+				BccChat.Send(causedBy, $"Could not parse given parameter '{StrIndex}' as index number");
 				return;
 			}
 			string StrNewIndex = m.Groups["newindex"].Value;
 			int NewIndex;
 			if (!int.TryParse(StrNewIndex, out NewIndex)) {
-				Chat.Send(causedBy, $"Could not parse given parameter '{StrNewIndex}' as index number");
+				BccChat.Send(causedBy, $"Could not parse given parameter '{StrNewIndex}' as index number");
 				return;
 			}
 			Announcements.MoveAnnouncement(Index, NewIndex);
-			Chat.Send(causedBy, $"Moved announcement {Index} to index {NewIndex}");
+			BccChat.Send(causedBy, $"Moved announcement {Index} to index {NewIndex}");
 		}
 
 
@@ -165,10 +171,10 @@ namespace ColonyCommands
 					return;
 				}
 				Announcements.EnableAnnouncement(Index);
-				Chat.Send(causedBy, $"Enabled announcement {Index}");
+				BccChat.Send(causedBy, $"Enabled announcement {Index}");
 			} else {
 				Announcements.EnableAllAnnouncements();
-				Chat.Send(causedBy, "Enabled all announcements");
+				BccChat.Send(causedBy, "Enabled all announcements");
 			}
 		}
 
@@ -184,10 +190,10 @@ namespace ColonyCommands
 					return;
 				}
 				Announcements.DisableAnnouncement(Index);
-				Chat.Send(causedBy, $"Disabled announcement {Index}");
+				BccChat.Send(causedBy, $"Disabled announcement {Index}");
 			} else {
 				Announcements.DisableAllAnnouncements ();
-				Chat.Send(causedBy, "Disabled all announcements");
+				BccChat.Send(causedBy, "Disabled all announcements");
 			}
 		}
 
@@ -197,12 +203,12 @@ namespace ColonyCommands
 			Index = -1;
 			var m = Regex.Match(param, @"A?(?<index>\d+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, $"Params didn't match, use {prefix} A[index]");
+				BccChat.Send(causedBy, $"Params didn't match, use {prefix} A[index]");
 				return false;
 			}
 			string StrIndex = m.Groups["index"].Value;
 			if (!int.TryParse(StrIndex, out Index)) {
-				Chat.Send(causedBy, $"Could not parse given parameter '{StrIndex}' as index number");
+				BccChat.Send(causedBy, $"Could not parse given parameter '{StrIndex}' as index number");
 				return false;
 			}
 			return true;
@@ -216,17 +222,17 @@ namespace ColonyCommands
 			}
 			var m = Regex.Match(param, @"(?<intervalSeconds>\d+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, $"Params didn't match, use {INTERVAL_PREFIX} [intervalSeconds]");
+				BccChat.Send(causedBy, $"Params didn't match, use {INTERVAL_PREFIX} [intervalSeconds]");
 				return;
 			}
 			int Interval;
 			string StrInterval = m.Groups["intervalSeconds"].Value;
 			if (!int.TryParse(StrInterval, out Interval)) {
-				Chat.Send(causedBy, $"Could not parse given parameter '{StrInterval}' as index number");
+				BccChat.Send(causedBy, $"Could not parse given parameter '{StrInterval}' as index number");
 				return;
 			}
 			Announcements.SetIntervalSeconds(Interval);
-			Chat.Send(causedBy, $"Set announcement interval to {Interval} seconds");
+			BccChat.Send(causedBy, $"Set announcement interval to {Interval} seconds");
 		}
 
 
@@ -237,9 +243,9 @@ namespace ColonyCommands
 			}
 			Announcements.SetWelcomeMessage(param);
 			if (param.Length > 0) {
-				Chat.Send(causedBy, $"Changed welcome message, see below\n{param}");
+				BccChat.Send(causedBy, $"Changed welcome message, see below\n{param}");
 			} else {
-				Chat.Send(causedBy, "Disabled welcome message");
+				BccChat.Send(causedBy, "Disabled welcome message");
 			}
 		}
 

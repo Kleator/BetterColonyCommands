@@ -28,7 +28,7 @@ namespace ColonyCommands
         m = Regex.Match(chattext, @"/jail (?<player>['].+[']|[^ ]+) ?(?<reason>.+)?$");
       }
       if (!m.Success) {
-        Chat.Send(causedBy, "Syntax error, use /jail <player> [time] <reason>");
+        BccChat.Send(causedBy, "Syntax error, use /jail <player> [time] <reason>");
         return true;
       }
 
@@ -36,7 +36,7 @@ namespace ColonyCommands
       string targetName = m.Groups["player"].Value;
       string error;
       if (!PlayerHelper.TryGetPlayer(targetName, out target, out error, true)) {
-        Chat.Send(causedBy, $"Could not find player {targetName}: {error}");
+        BccChat.Send(causedBy, $"Could not find player {targetName}: {error}");
         return true;
       }
 
@@ -46,18 +46,18 @@ namespace ColonyCommands
         jailtime = JailManager.jailConfig.defaultJailTime;
       } else {
         if (!int.TryParse(timeval, out jailtime)) {
-          Chat.Send(causedBy, $"Could not identify time value {timeval}");
+          BccChat.Send(causedBy, $"Could not identify time value {timeval}");
         }
       }
       string reason = m.Groups["reason"].Value;
 
       if (JailManager.IsPlayerJailed(target)) {
-        Chat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is already in jail.");
+        BccChat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is already in jail.");
         return true;
       }
 
       JailManager.jailPlayer(target, causedBy, reason, jailtime);
-      Chat.Send(causedBy, $"Threw {ChatColors.GetDisplayName(target)} into the jail for {jailtime} minutes");
+      BccChat.Send(causedBy, $"Threw {ChatColors.GetDisplayName(target)} into the jail for {jailtime} minutes");
 
       return true;
     }

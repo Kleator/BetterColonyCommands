@@ -23,7 +23,7 @@ namespace ColonyCommands
 					if (!PermissionsManager.HasPermission(player, "setflight")) {
 						player.SetFlightMode(false);
 						if (player.ConnectionState == Players.EConnectionState.Connected) {
-							Chat.Send(player, "Please don't fly");
+							BccChat.Send(player, "Please don't fly");
 						}
 					}
 				}

@@ -19,7 +19,7 @@ namespace ColonyCommands
 			}
 			var m = Regex.Match(chattext, @"/ban (?<target>['].+[']|.+?) (?<bantime>[0-9]+) (?<reason>.+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /ban {playername} {days} {reason}");
+				BccChat.Send(causedBy, "Syntax: /ban {playername} {days} {reason}");
 				return true;
 			}
 			string targetPlayerName = m.Groups["target"].Value;
@@ -29,17 +29,17 @@ namespace ColonyCommands
 			Players.Player targetPlayer;
 			string error;
 			if (!PlayerHelper.TryGetPlayer(targetPlayerName, out targetPlayer, out error, true)) {
-				Chat.Send(causedBy, $"Could not find target player '{targetPlayerName}'; {error}");
+				BccChat.Send(causedBy, $"Could not find target player '{targetPlayerName}'; {error}");
 				return true;
 			}
 
 			uint bantime = 0;
 			if (!uint.TryParse(timeValue, out bantime)) {
-				Chat.Send(causedBy, $"Could not identify number of days '{timeValue}': {error}");
+				BccChat.Send(causedBy, $"Could not identify number of days '{timeValue}': {error}");
 				return true;
 			}
 
-			Chat.Send(targetPlayer, "<color=red>You were banned from the server</color>");
+			BccChat.Send(targetPlayer, "<color=red>You were banned from the server</color>");
 			Chat.SendToConnected($"{ChatColors.GetDisplayName(targetPlayer)} is banned by {ChatColors.GetDisplayName(causedBy)}");
 			BannedPlayerManager.BanPlayer(targetPlayer, causedBy, bantime, reason);
 

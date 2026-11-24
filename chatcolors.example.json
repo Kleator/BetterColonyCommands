@@ -1,5 +1,5 @@
 {
-	"Format": "{name}{rolename:top}{rp}> {message}",
+	"Format": "{name}{rolename:top}{rp}: {message}",
 	"Groups": {
 		"god": {
 			"prefix" : "[God]",

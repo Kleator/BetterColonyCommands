@@ -18,24 +18,24 @@ namespace ColonyCommands
 		}
       var m = Regex.Match (chattext, @"/trash (?<material>.+) (?<amount>\d+)");
       if (!m.Success) {
-        Chat.Send (causedBy, "Command didn't match, use /trash [material] [amount]");
+        BccChat.Send(causedBy, "Command didn't match, use /trash [material] [amount]");
         return true;
       }
       var itemTypeName = m.Groups ["material"].Value;
       ushort itemType;
       if (!ItemTypes.IndexLookup.TryGetIndex (itemTypeName, out itemType)) {
-        Chat.Send (causedBy, "Command didn't match, item type not found");
+        BccChat.Send(causedBy, "Command didn't match, item type not found");
         return true;
       }
       var removeAmount = Int32.Parse (m.Groups ["amount"].Value);
       if (removeAmount <= 0) {
-        Chat.Send (causedBy, "Command didn't match, amount too low");
+        BccChat.Send(causedBy, "Command didn't match, amount too low");
         return true;
       }
 
       Colony colony = causedBy.ActiveColony;
 	  if (colony == null) {
-		Chat.Send(causedBy, "You have to be near an active colony to use this command");
+		BccChat.Send(causedBy, "You have to be near an active colony to use this command");
 		return true;
 	  }
 
@@ -55,14 +55,14 @@ namespace ColonyCommands
       // then delete from the stockpile
       Stockpile playerStockpile = colony.ColonyGroup.Stockpile;
       if (playerStockpile == null) {
-        Chat.Send(causedBy, "Could not get stockpile");
+        BccChat.Send(causedBy, "Could not get stockpile");
       } else {
         var actualAmount = System.Math.Min (playerStockpile.AmountContained (itemType), removeAmount);
         if (playerStockpile.TryRemove (itemType, actualAmount)) {
           totalRemoved += actualAmount;
-          Chat.Send (causedBy, $"Trashed {totalRemoved} x {ItemTypes.IndexLookup.GetName (itemType)}");
+          BccChat.Send(causedBy, $"Trashed {totalRemoved} x {ItemTypes.IndexLookup.GetName (itemType)}");
         } else {
-          Chat.Send (causedBy, $"Not enough items in stockpile");
+          BccChat.Send(causedBy, $"Not enough items in stockpile");
         }
       }
 

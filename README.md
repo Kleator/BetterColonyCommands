@@ -9,6 +9,7 @@ This is a maintained continuation of Colony Commands, originally by Adrenalynn a
 - Colony Survival `0.15.1.0`
 - Colony Survival `0.15.1.1`
 - Colony Survival `0.18.0.0`
+- Colony Survival `0.18.0.10`
 
 ## Credits
 
@@ -25,7 +26,7 @@ This is a maintained continuation of Colony Commands, originally by Adrenalynn a
 - Kept smart quarter block placement intact by reserving clicks only for actual transport targets.
 - Default anti-grief config is generated directly in the savegame if no config exists yet.
 - The anti-grief join notice is delayed and also shown as a small popup because the game chat can remain collapsed on join.
-- Set `ShowJoinPopup` to `false` in `antigrief-config.json` if you only want the chat line.
+- Set `ShowJoinPopup` to `false` in `antigrief-config.json` if you only want the chat line, and `ShowJoinChatMessage` to `false` (or untick it in `/bcconfig` → Anti-Grief & server) to send no "Anti-Grief protection enabled" chat line to anyone.
 
 ## Anti-Grief
 
@@ -35,7 +36,7 @@ Both values can be adjusted.
 Furthermore players are auto-**jailed** if they kill more than 2 foreign colonists, auto-**kicked** if killing more than 5 and auto-**banned** if they kill more than 6 foreign colonists.
 Those values can be configured in the config file, set them to 0 to disable the feature.
 
-Players are also able to whitelist friends by writing **/antigrief banner [friendly-player-name]** in chat. 
+Players are also able to whitelist friends by writing **/antigrief banner [friendly-player-name]** in chat - the friend may then build on all of your claims (banner areas) - or, per claim and with a window, with **Manage Permission** (see "Trust on Claims" below).
 
 Last but not least players with master permission **mods.scarabol.antigrief** are able to define custom protected areas.
 Use **/antigrief area 10 10** to restrict regular players from changing blocks in an area 10 blocks around your current position.
@@ -153,7 +154,7 @@ Each entry in **blacklistedwords.json** is a regex pattern (.NET regex syntax), 
 
 ## Reloading Config
 
-**/bcreload** reloads this mod's config files from disk without a server restart: `antigrief-config.json`, `chatcolors.json`, `travelpaths.json`, `blacklistedwords.json`, `jail-config.json` and `announcements.json`. Requires permission **mods.scarabol.commands.bcreload**.
+**/bcreload** reloads this mod's config files from disk without a server restart: `antigrief-config.json`, `chatcolors.json`, `travelpaths.json`, `blacklistedwords.json`, `jail-config.json`, `announcements.json`, `bcc-settings.json` and `bcc-playersettings.json`. Requires permission **mods.scarabol.commands.bcreload**.
 
 It deliberately does *not* reload runtime/history data - `playeractivity.json`, `banned-players-log.json`, `jail-log.json`, `roleplay-banned.json` or war status - since those track live state rather than admin settings, and reloading them could discard in-memory progress (e.g. a player's playtime since the last autosave) or restart a background timer a second time (jail release checks, colony name scans, war status checks, announcement broadcasts all self-reschedule and are only started once, at world load).
 
@@ -203,9 +204,132 @@ Placeholders available in **Format**:
 
 A role tag only shows up for a player who actually has the matching **`mods.scarabol.commands.betterchat.<groupname>`** permission granted (via your permission groups config) - adding an entry to `chatcolors.json`'s `Groups` only defines its look, it doesn't grant it to anyone. A player with none of the configured groups sees empty tag placeholders (just `{name}{rp}> {message}`).
 
+## Windows (UI) - since 1.1.0
+
+Everything works in chat **and** in windows (server popups - no client mod needed).
+
+- **`/help`** opens the command window: only commands you may use, grouped by mod (Better Colony Commands first, then every other mod), filter, paging. **Details** shows description, usage and one input field per parameter plus **Execute**. Commands you have no permission for are not listed; their details page has neither input fields nor an Execute button, and every click is re-checked on the server. `/help chat [page]` lists in chat (like `/pytoniahelp`), `/help <command>` shows details.
+- **Output windows**: info commands typed in chat (`bcc-settings.json` → `Ui.WindowCommands`, default `/top`, `/mtop`, `/online`, `/lastseen`, `/groups`, `/banlog`, `/jailrec`, `/inactive`, `/list`, `/roles`, `/roletime`, `/money`, `/baltop`, …) show their output in a window with paging. Commands started from the help window always show their output in a window (other mods' commands answer in chat - their output can't be captured).
+- Every window has **Back** (previous page) and **Close**. Lists scroll on one page; only beyond `Ui.MaxLinesPerPage` lines (default 500) they continue on further pages with **< Prev / Next >**.
+- Every command executed from a window is logged in the server log with player, full command line and result (`[BCC UI]`).
+- The game's own commands are listed too (mod "Colony Survival") with the permissions the game checks; commands the game doesn't check get an auto-created `colonysurvival.cmd.<command>` permission.
+- **Players** choose: `/bcui exclude <command>` / `/bcui include <command>` / `/bcui on|off` / `/bcui reset` / `/bcui list`, or the **My settings** window (`/bcsettings`).
+- **Server** default: `Ui.Enabled` (master switch) and `Ui.ExcludedCommands` (never a window) **always override** the player settings - editable in `/bcconfig` → "Windows (UI)".
+- Rich text is shown in all windows. `<size>` (and other layout tags) are removed from player-defined names (colonies, banners, players) in chat and UI, so a name can never appear oversized.
+
+## Economy - since 1.1.0
+
+`/money [player]`, `/pay {player} {amount}`, `/baltop [page]`, `/exchange {tomoney|tocoins} {amount}`, admin `/addmoney`, `/removemoney`, `/setmoney` (`mods.scarabol.commands.economy.admin`). Settings in `bcc-settings.json` → `Economy` (`Enabled` switches the whole module off, `CurrencyName`, `StartingBalance`, `PassiveIncomeIntervalMinutes`, `PassiveIncomeAmount`, `ShowHud`, `AllowPay`, `PytoniaSync`, `TraderIntegration`, `TraderExchangeEnabled`, `TraderCoinValue`, `TraderSnapshotIntervalSeconds`). Balances are stored in `bcc-economy.json` (with `.bak` and a log of the last 300 transactions).
+
+- **Pytonia Automation installed**: its economy stays in charge (it answers `/money`, `/addmoney`, `/setmoney`, `/removemoney`); Better Colony Commands forwards all its own operations to it and mirrors every balance into `bcc-economy.json`. If Pytonia Automation is removed, Better Colony Commands simply continues with the mirrored balances (and imports anything newer from `pytonia-automation.json`). If it comes back, changes made in the meantime are pushed back. A three-way merge (current BCC value + changes in Pytonia since the last common state) makes sure no change from either side is lost.
+- **THE TRADER** (Trader Coins are stockpile items): coin stocks are snapshotted while it runs, `/exchange` converts coins and money. When THE TRADER is removed, each colony's coins are converted into money for its owners (`TraderCoinValue`), owners are told on their next join, and the leftover placeholder coins are removed from the stockpile so nothing is counted twice.
+
+## Random Teleport - since 1.1.0
+
+**/rtp** teleports you to a random safe spot `Rtp.MinDistance`..`Rtp.MaxDistance` blocks around your current position (default 100..1000). You land at most 2 blocks above the ground (never inside it); where the target chunk isn't loaded yet, the height is corrected as soon as it is, and fall damage is cancelled until your first landing. Cooldown `Rtp.CooldownSeconds` (default 300; permission `mods.scarabol.commands.rtp.nocooldown` bypasses it). Never lands in water and (configurable) never in the spawn/custom protection areas or in foreign banner areas. Disabled with `Rtp.Enabled: false`.
+
+## Roles and Role Time - since 1.1.0
+
+- **/roletime** shows your online time, the next role you will reach and the time left, and every role still ahead of you (next role first - roles you already have are not listed). Time based roles are a feature of **Pytonia Automation** (`pytonia-automation.json` → `Roles.<role>.RequiredHoursOnline`); `/roletime` and the "Time based roles" section in `/bcconfig` only exist while it is installed.
+- **/roles** lists every role with its chat formatting. Wherever a role is mentioned (`/roles`, `/groups`, `/roletime`, `/permissions`) it is shown with the formatting of its `chatcolors.json` group (prefix with prefix color, otherwise the name color).
+
+## Role Management - since 1.1.0
+
+`/bcconfig` → **Roles, permissions & role formatting** (permission `mods.scarabol.commands.config`):
+
+- All roles (the game's permission groups) as a **tree**: a role inherits every permission of the roles below it (multi-level). The structure is read from the existing `permissiongroups.json`; on the first change the game's default file is copied into the world folder. The game's permissions are reloaded after every change, a backup is kept as `.bak`.
+- **Create** a role (optionally placed under a role and inheriting from another), **delete** it (with confirmation, not the default role), choose the **default role** for new players.
+- **Safe from game updates**: a copy of the permission groups and the game version it belongs to is kept in the world folder (`bcc-permissiongroups-backup.json`). If a game update resets `permissiongroups.json` (some hosts put the game's default `gamedata/settings/permissiongroups.json` back), the last state is restored at the next start as the world's own `permissiongroups.json` and the permissions are reloaded before anyone joins; the reset file is kept in `bcc-permission-backups/` and admins get a chat notice. Changes made without a game update (role editor, file edits) simply renew the backup. `/bcconfig` → **Permission groups backup** shows the status and switches it off (`Permissions.RestoreGroupsAfterGameUpdate`, `Permissions.KeepBackups`).
+- **Who has a role** is read from the game's live data exactly like the chat role tag sees it: roles in the player's entry, the **default role** (players without an entry, and players whose entry the game created as a copy of the default role - the game copies its permissions instead of its name), and roles held **through a higher role** ("through ...", no Add/Remove button - change the higher role). Each role page lists these players (recently online first, up to `Ui.MaxLinesPerPage`), the player page shows "Add" only for roles the player really doesn't have. A role can't be added twice; "Remove" takes every copy away (for the default role also the copied permissions). Duplicate roles in `permissionusers.json` are cleaned up at start and when a player joins.
+- **Test** a role (button in the role list and on each role page, or `/roletest {role}`): your roles are saved, you get only that role for 2 minutes and then your own roles back automatically. You are told in chat right after the switch; `/roletest end` (or "End test now" in the window) stops early and always works, even if the tested role may not manage roles. The saved roles are in the world's `bcc-roletests.json` before anything changes, so they also come back after a disconnect, when the server stops, and after a crash at the next start. Own permissions (not from a role) stay active during the test.
+- Each role has its own page: **rename** (updated everywhere - other roles, players in `permissionusers.json`, `betterchat.<role>` and `permissions.setgroup.<role>` permissions, `chatcolors.json`, `jail-config.json`, Pytonia Automation, home limits), **chat formatting** (tag, tag color, name color, message color; the role gets the `betterchat.<role>` permission automatically, chat priority follows the tree), **inheritance** in both directions (loops are refused), **players** with the role (add/remove), **own permissions** (add by name or pick from every known permission with its mod), **Pytonia Automation values** (online hours, time based exclusion, homes, max colonies) or the home limit.
+
+## Player Moderation - since 1.1.0
+
+`/players [search]`, the **Players** button in `/help` or `/bcconfig` → **Player moderation** (permission `mods.scarabol.commands.playermoderation`):
+
+- All players of the server, **last online first**, searchable by name or SteamID, filters *All / Online / With incidents / Banned*. Bans, jail, mutes, roleplay bans and the number of incidents are visible directly in the list.
+- **Player page**: status and position; **Teleport to player, Kick, Mute/Unmute, Jail/Release, Ban/Unban** (ban with confirmation - like `/ban` it deletes colonies the player owns alone); **online time**; **money**; **roles** and **own permissions**; **colonies & banners** (rename, teleport, remove as owner, delete) and the **Pytonia Automation colony limit**; **homes**; the **moderation history** (bans, jail sentences, kicks, mutes, roleplay bans, blocked colony names, killed colonists, admin changes) with **notes** and **warnings**.
+- **Warnings** pop up for the player (on the next join if offline) until they confirm them with OK.
+- Only moderators see the "Players" button and can open the overview.
+- **Where roles and permissions work:**
+
+  | How the world runs | Roles & permissions |
+  |---|---|
+  | Dedicated Steam server | work for every player |
+  | Hosted for friends (Host menu) | work for the guests; the host always has every permission (the game treats the host as server admin); roles are stored with the world |
+  | Singleplayer, LAN | don't work - the game connects players without SteamID, gives them every permission and can't store roles |
+
+  Better Colony Commands shows an orange note about this on the role, permission and moderation pages.
+- **Singleplayer and LAN games:** the game connects players without SteamID and gives them every permission (that's how the game itself works) - permissions and the moderator restriction only apply on a Steam server, and roles can't be stored for such players.
+- Each action also needs its usual permission (`kick`, `mute`, `jail`, `ban`, `economy.admin`, `config`, `setcolonyname`, `purgebanner`, `warp.self`, ...); buttons without it are disabled. Everything is logged (`[BCC UI]`) and stored in `bcc-moderation-log.json`.
+
+## Trust on Claims - since 1.1.0
+
+Next to **Manage Owners** in the game's Colony tab every owner gets a **Manage Permission** button (also `/trust`, or from the `/help` window): it lists who may build on this claim (the colony's banner area) and lets you add players - online players first, everyone else by searching their name - and remove them again. Opened from the Colony tab, **< Back** returns to it. With **Angry Guards** installed each trusted player has a **Guards: friendly/hostile** toggle (friendly light green, hostile red) (Angry Guards' friend list of the owners, valid for all their colonies). **Player** opens that player with all of your claims: trust or remove per claim, **Trust on all my claims**, **Remove from all**, and the guards toggle. Trusted players may build and place banners in the banner area like an owner; stockpile and jobs are shared with the game's "Manage Owners". Stored as own permission of the trusted player (`mods.scarabol.antigrief.banner.colony.<10-digit colony id>`; `/antigrief banner` stores `mods.scarabol.antigrief.banner.<owner steamid>` for all claims of that owner).
+
+`/trust` (window of your active colony), `/trust {player}` (that player and all your claims), `/trust add|remove {player}`, `/trust list` (chat, active colony).
+
+## Home Points - since 1.1.0
+
+`/sethome [name]`, `/home [name]`, `/homes` (opens the **My homes** window: teleport, set, delete), `/delhome [name]`. Limits per role in `bcc-settings.json` → `Homes` (`DefaultLimit`, `RoleLimits` - imported from Pytonia Automation's roles on first start, also editable on each role's page; `-1` = unlimited). Home points are part of Better Colony Commands (data in `bcc-homes.json`). Coming from **Pytonia Automation**: its homes are imported automatically at start (only ones Better Colony Commands doesn't know yet) and its role home limits once; Better Colony Commands' commands answer even if an older Pytonia Automation still has its own home module. Pytonia Automation's home permissions are migrated once per world: `pytonia.automation.home` → `bcc.cmd.home` + `bcc.cmd.homes`, `.sethome` → `bcc.cmd.sethome`, `.delhome` → `bcc.cmd.delhome` (for roles and for players with own permissions, also when granted through a parent like `pytonia.automation`); a Pytonia permission nobody had goes to the all-permission roles, so the commands stay as restricted as before.
+
+## Protected Areas and Colonists - since 1.1.0
+
+If colonists or job blocks (not the player) try to change blocks in a protected area (spawn, custom areas, foreign banner areas, water placement), the change is blocked silently and the colony's owners get **one** notice per session in the game's notification list (with position and reason). Marking it read or deleting it acknowledges it; no more chat messages for every block.
+
+## Mod List - since 1.1.0
+
+**/modlist [page|name] [az]** (window or chat) lists every installed mod with preview image, version and description - most recently updated on this server first (newest file in the mod folder), or A-Z. **Details** shows author, website, game versions, long description and the **complete version history** (newest first). Settings: `ModList.Enabled`, `ShowImages`, `MaxImageKilobytes`, `ShowBaseGame`, `HiddenMods`.
+
+**How a mod appears correctly** - in its `modInfo.json` entry:
+
+| Key | Required | Meaning |
+|---|---|---|
+| `name`, `version`, `description`, `dllpath`, `compatibleversions` | standard | name, version, short description (list), mod folder (via the DLL), game versions |
+| `author`, `homepage`, `workshopid` | optional | shown on the details page (`workshopid` is detected automatically for workshop mods) |
+| `longdescription` | optional | string (with `\n`) or array of strings, rich text allowed |
+| `previewimage` | optional | image path relative to the mod folder; otherwise `preview.png/.jpg`, `icon.png`, `thumbnail.png`, `logo.png` or any png/jpg named like a preview/thumbnail/logo |
+| `patchnotes` | optional | `[{ "version": "1.2.0", "date": "2026-11-23", "notes": ["..."] }]`, newest first. Without it, a `CHANGELOG.md` in the mod folder is read (`## 1.2.0 - date` / `## [1.2.0]` headings, `### Section` and `- ` bullets) |
+| `bcc_hidden` | optional | `true` hides the mod from `/modlist` |
+
+Images should be square (shown 56 px in the list, 144 px on the details page) and below `MaxImageKilobytes` (default 1024) - clients download each image once. The Steam Workshop preview picture is not stored locally, so ship the image inside the mod folder.
+
+## Permissions Overview and Auto-Created Permissions - since 1.1.0
+
+- **/permissions [filter|page|unused|used|open]** (window or chat) lists every permission that exists in the game - Better Colony Commands', every other mod's registered ones and everything found in `permissiongroups.json`/`permissionusers.json` - with its mod, description, the groups (shown with their role formatting) and number of players that have it, and marks unused ones. Only for `mods.scarabol.commands.permissions`; groups with the all-permission `""` (e.g. `god`) have it automatically. The help window shows its button only to those players.
+- **Commands without a permission** get an auto-created one: `bcc.cmd.<command>` (other mods: `<modname>.cmd.<command>`, e.g. `pytoniaautomation.cmd.money`). It is **open to everyone as long as it is not assigned anywhere**. As soon as an admin assigns that permission - or a parent of it, e.g. `colonysurvival.cmd.debug` for all unchecked `/debug` commands - to a group or player, only those may use the command; this is enforced for other mods' and the game's commands too. **Tip:** the game doesn't check `/debug clearinventory`, `/debug clearstockpile` and a few other debug commands at all - assign `colonysurvival.cmd.debug` to your admin role to restrict them.
+
+## Admin Configuration - since 1.1.0
+
+**/bcconfig** (`mods.scarabol.commands.config`) edits every setting in a window, with an explanation per entry: role management (see above), `antigrief-config.json`, `bcc-settings.json` (Windows, /rtp, Economy, Mod list, Home points), `jail-config.json`, the chat line format and - with Pytonia Automation installed - its time based roles. Lists are comma separated. Changes are saved immediately (previous file kept as `.bak` where applicable) and logged. **Announcements** have their own page (also `/announcements` without arguments) (welcome message, interval, messages with On/Off, Edit, Up/Down, Send now, Delete, Add). Travel paths and the colony name blacklist stay managed by `/travel` and `blacklistedwords.json` + `/bcreload`.
+
+## For Mod Developers - BccApi - since 1.1.0
+
+Other mods can integrate without a hard dependency (all methods in `ColonyCommands.BccApi` use only primitive types and `Players.Player`, ideal for reflection):
+
+```csharp
+Type api = AppDomain.CurrentDomain.GetAssemblies()
+    .Select(a => a.GetType("ColonyCommands.BccApi", false)).FirstOrDefault(t => t != null);
+api?.GetMethod("RegisterCommandEx")?.Invoke(null, new object[] {
+    "My Mod", "/mycommand", "What it does.", "mymod.mycommand",   // permission: null = auto-created, open to everyone
+    "/mycommand {player} [amount]",
+    new[] { "player", "amount?" }, new[] { "Target player", "How many" }, new[] { "/mc" } });
+```
+
+- Also: `RegisterCommand(mod, command, description, permission[, usage])`, `RegisterPermission(mod, permission, description)`, `CanUseCommand`, `HasOpenPermission`, economy (`IsEconomyEnabled`, `GetEconomyBackend`, `GetCurrencyName`, `FormatMoney`, `GetBalance`, `AddBalance`, `TryRemoveBalance`, `SetBalance`, `TryTransfer`), `ShowOutputWindow(player, title, lines)`, `UsesWindowFor`, `StripRichText`, `SafeName`, `FormatRole`.
+- **Automatic discovery**: any static class named `*CommandRegistry` with a static `All` (or `Commands`) collection whose items have `CommandText` (or `Command`), `Description`, `Permission` (and optionally `Usage`) is read automatically - all Pytonia mods already work this way.
+- The old way (writing into the private `ColonyCommands.HelpCommand.commandPermissionList` dictionary via reflection) keeps working.
+- **Mods without any of that** (e.g. MapMod) are still listed: their chat command handler (`IChatCommand.TryDoCommand`) is read once and every `/command` text it compares with becomes a command of that mod, with the sentence of the mod's `modInfo.json` description that names the command as description. Registering through `BccApi` or a registry is better - it gives every command a description and usage.
+
+## Self Test (server admins / developers)
+
+Put a file `bcc-selftest.txt` into the world folder (`gamedata/savegames/<world>/`). 20 seconds after the world loaded, Better Colony Commands runs internal checks, builds every window, executes each line of the file as a chat command of the server (output captured) and writes everything to `bcc-selftest-result.txt`; the request file is renamed to `bcc-selftest.done.txt`. Lines starting with `#` are comments. Test helpers: `!as <player> | <command>` (run as that player, also offline), `!ui <player> | <help|cmd /x|mods|mod <name>|perms|config|configsection <key>|settings>` (lists the window's elements and buttons), `!findcolony <name>`, `!ledger`, `!tradercoins`, `!addtradercoins <n>`, `!autosave`, `!quit`.
+Note: on a server started with network type LocalHost every player counts as RCON-authenticated and has all permissions - use a Steam network type to test permissions.
+
 ## All Commands
 
-*(none)* means no permission is required. Where a command has both a self and other-player variant, both permissions are listed.
+*(none)* means no permission of its own: the command uses an auto-created `bcc.cmd.<command>` permission that is open to everyone until you assign it to a group (see "Permissions Overview" above). Where a command has both a self and other-player variant, both permissions are listed.
 
 ### Anti-Grief & Moderation
 
@@ -278,18 +402,32 @@ A role tag only shows up for a player who actually has the matching **`mods.scar
 | `/tpadeny` | *(none)* | Denies your pending teleport request. |
 | `/warp {player}` | `mods.scarabol.commands.warp.self` | Warps you to a player's position. |
 | `/warp {player} {other}` | `mods.scarabol.commands.warp.player` | Warps a second player to the first player's position. |
-| `/warpbanner [name]` | `mods.scarabol.commands.warp.banner.self` (own colonies) or `.warp.banner` (any colony) | Warps to your closest colony, or the one given by name. |
+| `/warpbanner [name]` | `mods.scarabol.commands.warp.banner.self` (own colonies) or `.warp.banner` (any colony) | Warps to your closest colony, or the one given by name - formatting and symbols in banner names are ignored (`Highrise-City3`). |
 | `/warpspawn` | `mods.scarabol.commands.warp.spawn.self` | Warps you to the spawn point. |
 | `/warpspawn {player}` | `mods.scarabol.commands.warp.spawn` | Warps another player to the spawn point. |
 | `/warpplace {x} {y} {z}` | `mods.scarabol.commands.warp.place` | Warps you to a specific coordinate. |
 | `/travel add\|remove ...` | `mods.scarabol.commands.travelpaths` | Manages fast-travel points players auto-warp through. |
 | `/stuck` | *(none)* | Auto-warps you to spawn if you don't move for 1 minute. |
+| `/sethome [name]`, `/home [name]`, `/delhome [name]` | *(none)* | Home points (limit per role, set on each role's page). |
+| `/trust [player\|add\|remove\|list] [player]` | *(none)* | Who may build on your claims: "Manage Permission" window (also next to "Manage Owners" in the Colony tab), player view with all your claims, chat variants. |
+| `/homes` | *(none)* | Your home points; opens the "My homes" window. |
+| `/rtp` | *(none)*, `mods.scarabol.commands.rtp.nocooldown` skips the cooldown | Random teleport to a safe spot around you (server-defined range and cooldown). |
 
 ### Player Info & Utility
 
 | Command | Permission | Description |
 |---|---|---|
-| `/help [filter]` | *(none)* | Lists the commands you have permission to use, optionally filtered by text. |
+| `/help [filter\|page\|chat\|command]` | *(none)* | Opens the command window (only commands you may use, with details and execute); `/help chat` lists them in chat. |
+| `/roletime` | *(none)* | Your online time, next role and time left, roles still ahead (next first). Only with Pytonia Automation. |
+| `/roles` | *(none)* | All roles with their chat formatting. |
+| `/achievements` | *(none)*; `enable`: `mods.scarabol.commands.achievements.enable` | Are Steam achievements still on for you, your colonies and this world? Admins: `/achievements enable {player\|all}` switches them back on (player, their colonies and co-owners). |
+| `/modlist [page\|name]` | *(none)* | Installed mods with preview image, version, description and a details page. |
+| `/bcui {exclude\|include\|list\|on\|off\|reset} [command]` | *(none)* | Choose which commands show their output in a window. |
+| `/bcsettings` | *(none)* | Your personal window settings. |
+| `/money [player]` | *(none)* | Your (or another player's) balance. With Pytonia Automation installed, its `/money` answers. |
+| `/pay {player} {amount}` | *(none)* | Sends money to another player. |
+| `/baltop [page]` | *(none)* | Richest players. |
+| `/exchange {tomoney\|tocoins} {amount}` | *(none)* | Exchanges THE TRADER's Trader Coins (colony stockpile) and money. |
 | `/groups {player}` | `mods.scarabol.commands.groups` | Lists a player's explicitly assigned permission group(s). |
 | `/online [id]` | *(none)* | Lists online players; `id` adds an 8-digit hash usable in place of a name. |
 | `/lastseen {player}` | *(none)* | Shows a player's last-seen time and total playtime. |
@@ -303,6 +441,10 @@ A role tag only shows up for a player who actually has the matching **`mods.scar
 
 | Command | Permission | Description |
 |---|---|---|
+| `/permissions [filter\|page\|unused\|used\|open]` | `mods.scarabol.commands.permissions` | Every permission in the game, its mod, who has it, unused ones. |
+| `/bcconfig` | `mods.scarabol.commands.config` | Admin configuration window for all settings. |
+| `/roletest [role\|end]` | `mods.scarabol.commands.config` (`end`: everyone in a test) | Tests a role for 2 minutes, then your own roles come back (also after a disconnect, server stop or crash). |
+| `/addmoney`, `/removemoney`, `/setmoney {player} {amount}` | `mods.scarabol.commands.economy.admin` | Economy admin commands (answered by Pytonia Automation if installed). |
 | `/spawnnpc {number}` | `mods.scarabol.commands.npcandbeds` | Spawns colonists at no food cost and no beds required (admin/test use). |
 | `/beds {number}` | `mods.scarabol.commands.npcandbeds` | Places beds in a spiral around your banner (admin/test use). |
 | `/announcements {add\|remove\|edit\|move\|enable\|disable\|interval} ...` | `mods.scarabol.commands.announcements.list` | Manages scheduled, rotating chat announcements. |

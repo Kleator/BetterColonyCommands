@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="src\*.cs" />
+    <Compile Include="src\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -26,13 +26,13 @@ namespace ColonyCommands
         }) {
         ushort actualType;
         if (!World.TryGetTypeAt (toCheckPosition, out actualType)) {
-          Chat.Send (causedBy, $"Could not get the item type at {toCheckPosition}");
+          BccChat.Send(causedBy, $"Could not get the item type at {toCheckPosition}");
         } else if (actualType == BuiltinBlocks.Indices.water) {
           toCheckWaterBlocks.Add (toCheckPosition);
         }
       }
       if (toCheckWaterBlocks.Count < 1) {
-        Chat.Send (causedBy, $"No water found at {causedBy.PositionStanding}. Please get your feet wet!");
+        BccChat.Send(causedBy, $"No water found at {causedBy.PositionStanding}. Please get your feet wet!");
         return true;
       }
       List<Vector3Int> toCleanBlocks = new List<Vector3Int> ();
@@ -53,7 +53,7 @@ namespace ColonyCommands
           }
         }
       }
-      Chat.Send (causedBy, $"Replaced {toCleanBlocks.Count} water blocks. Start cleaning up...");
+      BccChat.Send(causedBy, $"Replaced {toCleanBlocks.Count} water blocks. Start cleaning up...");
       foreach (Vector3Int AbsRemove in toCheckWaterBlocks) {
         ServerManager.TryChangeBlock (AbsRemove, BuiltinBlocks.Indices.air);
       }

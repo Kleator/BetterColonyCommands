@@ -16,7 +16,7 @@ namespace ColonyCommands
 			}
 			var m = Regex.Match(chattext, @"/killplayer( (?<targetplayername>['].+[']|.+))?");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /killplayer [targetplayername]");
+				BccChat.Send(causedBy, "Syntax: /killplayer [targetplayername]");
 				return true;
 			}
 
@@ -25,7 +25,7 @@ namespace ColonyCommands
 			string error;
 			if (targetPlayerName.Length > 0) {
 				if (!PlayerHelper.TryGetPlayer(targetPlayerName, out targetPlayer, out error, true)) {
-					Chat.Send(causedBy, $"Could not find '{targetPlayerName}'; {error}");
+					BccChat.Send(causedBy, $"Could not find '{targetPlayerName}'; {error}");
 					return true;
 				}
 			}

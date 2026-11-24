@@ -18,7 +18,7 @@ namespace ColonyCommands
 
 			var m = Regex.Match(chattext, @"/tpa (?<targetplayername>['].+[']|.+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /tpa {targetplayername}");
+				BccChat.Send(causedBy, "Syntax: /tpa {targetplayername}");
 				return true;
 			}
 
@@ -26,12 +26,12 @@ namespace ColonyCommands
 			string error;
 			Players.Player targetPlayer;
 			if (!PlayerHelper.TryGetPlayer(targetPlayerName, out targetPlayer, out error)) {
-				Chat.Send(causedBy, $"Could not find target player '{targetPlayerName}'; {error}");
+				BccChat.Send(causedBy, $"Could not find target player '{targetPlayerName}'; {error}");
 				return true;
 			}
 
 			if (!TpaManager.TryCreateRequest(causedBy, targetPlayer, out error)) {
-				Chat.Send(causedBy, $"<color=red>{error}</color>");
+				BccChat.Send(causedBy, $"<color=red>{error}</color>");
 			}
 			return true;
 		}

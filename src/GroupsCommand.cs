@@ -18,7 +18,7 @@ namespace ColonyCommands
 
 			var m = Regex.Match(chattext, @"/groups (?<targetplayername>['].+[']|.+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /groups {playername}");
+				BccChat.Send(causedBy, "Syntax: /groups {playername}");
 				return true;
 			}
 
@@ -26,15 +26,24 @@ namespace ColonyCommands
 			string error;
 			Players.Player targetPlayer;
 			if (!PlayerHelper.TryGetPlayer(targetPlayerName, out targetPlayer, out error, true)) {
-				Chat.Send(causedBy, $"Could not find player '{targetPlayerName}'; {error}");
+				BccChat.Send(causedBy, $"Could not find player '{targetPlayerName}'; {error}");
 				return true;
 			}
 
-			List<string> groups = PermissionsHelper.GetGroupNames(targetPlayer);
-			if (groups.Count == 0) {
-				Chat.Send(causedBy, $"{ChatColors.GetDisplayName(targetPlayer)} has no explicitly assigned groups (default group)");
+			string notice = NetworkInfo.PermissionNotice(causedBy);
+			if (notice != null) {
+				BccChat.Send(causedBy, $"<color=#FFB347>{notice}</color>");
+			}
+			List<RoleIndex.Holding> held = RoleIndex.Of(targetPlayer);
+			List<RoleIndex.Holding> assigned = held.FindAll(h => h.Kind != RoleIndex.HoldKind.Inherited);
+			List<RoleIndex.Holding> inherited = held.FindAll(h => h.Kind == RoleIndex.HoldKind.Inherited);
+			if (assigned.Count == 0) {
+				BccChat.Send(causedBy, $"{ChatColors.GetDisplayName(targetPlayer)} has no role");
 			} else {
-				Chat.Send(causedBy, $"{ChatColors.GetDisplayName(targetPlayer)} groups: {string.Join(", ", groups)}");
+				BccChat.Send(causedBy, $"{ChatColors.GetDisplayName(targetPlayer)} roles: {string.Join(", ", assigned.ConvertAll(h => ChatColors.FormatRole(h.Role) + (h.Kind == RoleIndex.HoldKind.Default ? Style.Muted(" (" + RoleIndex.Describe(h) + ")") : "")))}");
+			}
+			if (inherited.Count > 0) {
+				BccChat.Send(causedBy, Style.Muted("through these also: ") + string.Join(", ", inherited.ConvertAll(h => ChatColors.FormatRole(h.Role))));
 			}
 			return true;
 		}

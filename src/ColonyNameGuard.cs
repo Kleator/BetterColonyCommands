@@ -154,10 +154,13 @@ namespace ColonyCommands
 				Players.Player owner = colonyGroup.Owners.GetAt(i);
 				colony.SendNameUpdate(owner);
 				if (i == 0) {
-					Chat.Send(owner, $"<color=red>That colony name isn't allowed, reset to '{newName}'. Trying to get around this with special characters risks getting the colony purged.</color>");
+					BccChat.Send(owner, $"<color=red>That colony name isn't allowed, reset to '{newName}'. Trying to get around this with special characters risks getting the colony purged.</color>");
 				}
 			}
 			knownGoodNames[colony.ColonyID] = newName;
+			if (colonyGroup.Owners.Count > 0) {
+				ModerationLog.Add(colonyGroup.Owners.GetAt(0), "Colony name blocked", null, $"'{TextHelper.StripRichText(rejectedName)}' matched blacklist rule '{matchedPattern}', reset to '{newName}'");
+			}
 			Log.WriteWarning($"ColonyNameGuard: colony name '{rejectedName}' matched {CONFIG_FILE} rule '{matchedPattern}', reset to '{newName}'");
 		}
 

@@ -24,7 +24,7 @@ namespace ColonyCommands
         }
         reply += $"slot {slot + 1} contains: '{typename}'\n";
       }
-      Chat.Send (causedBy, reply);
+      BccChat.Send(causedBy, reply);
       return true;
     }
   }

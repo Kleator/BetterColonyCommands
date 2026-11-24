@@ -16,7 +16,7 @@ namespace ColonyCommands
 			}
 			Match m = Regex.Match(chattext, @"/list (?<playername>['].+[']|.+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /list {playername}");
+				BccChat.Send(causedBy, "Syntax: /list {playername}");
 				return true;
 			}
 			if (!PermissionsManager.CheckAndWarnPermission(causedBy, AntiGrief.MOD_PREFIX + "listplayer")) {
@@ -27,7 +27,7 @@ namespace ColonyCommands
 			string error;
 			Players.Player targetPlayer;
 			if (!PlayerHelper.TryGetPlayer(targetName, out targetPlayer, out error, true)) {
-				Chat.Send(causedBy, $"Could not find '{targetName}'; {error}");
+				BccChat.Send(causedBy, $"Could not find '{targetName}'; {error}");
 				return true;
 			}
 
@@ -38,12 +38,12 @@ namespace ColonyCommands
 				if (!colonies.Equals("")) {
 					colonies += ", ";
 				}
-				colonies += targetPlayer.ColonyGroups[i].Name;
+				colonies += TextHelper.SafeName(targetPlayer.ColonyGroups[i].Name);
 				count++;
 			}
 
-			Chat.Send(causedBy, $"Player {ChatColors.GetDisplayName(targetPlayer)} last seen {lastSeen}");
-			Chat.Send(causedBy, $"{ChatColors.GetDisplayName(targetPlayer)} owns {count} colonies: {colonies}");
+			BccChat.Send(causedBy, $"Player {ChatColors.GetDisplayName(targetPlayer)} last seen {lastSeen}");
+			BccChat.Send(causedBy, $"{ChatColors.GetDisplayName(targetPlayer)} owns {count} colonies: {colonies}");
 			return true;
 		}
 	}

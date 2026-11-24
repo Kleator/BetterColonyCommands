@@ -20,7 +20,7 @@ namespace ColonyCommands
       if (StuckPositions.TryGetValue (player, out stuckPos) && Pipliz.Math.ManhattanDistance (player.PositionVoxelStanding, stuckPos) > 0) {
         RescueOperations.Remove (player);
         StuckPositions.Remove (player);
-        Chat.Send (player, "Oh you got free! Rescue mission aborted.");
+        BccChat.Send(player, "Oh you got free! Rescue mission aborted.");
       }
     }
 
@@ -33,7 +33,7 @@ namespace ColonyCommands
 		//	return true;
 		//}
 		if (JailManager.IsPlayerJailed(causedBy)) {
-			Chat.Send(causedBy, "Imprisoned is not stuck!");
+			BccChat.Send(causedBy, "Imprisoned is not stuck!");
 			return true;
 		}
 
@@ -42,12 +42,12 @@ namespace ColonyCommands
       var rescueId = Pipliz.Random.NextLong ();
       RescueOperations.Add (causedBy, rescueId);
       StuckPositions.Add (causedBy, causedBy.PositionVoxelStanding);
-      Chat.Send (causedBy, "Please don't move for 1 Minute. Help is on the way!");
+      BccChat.Send(causedBy, "Please don't move for 1 Minute. Help is on the way!");
       ThreadManager.InvokeOnMainThread (delegate () {
         long actualId;
         if (RescueOperations.TryGetValue (causedBy, out actualId) && actualId == rescueId) {
           Teleport.TeleportTo (causedBy, ServerManager.GetSpawnPoint().Position.Vector);
-          Chat.Send (causedBy, "Thank you for your patience. Have a nice day!");
+          BccChat.Send(causedBy, "Thank you for your patience. Have a nice day!");
         }
       }, 60.0f);
       return true;

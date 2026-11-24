@@ -20,11 +20,11 @@ namespace ColonyCommands
 			int days;
 			if (splits.Count == 2) {
 				if (!int.TryParse(splits[1], out days)) {
-					Chat.Send(causedBy, $"Could not parse days value");
+					BccChat.Send(causedBy, $"Could not parse days value");
 					return true;
 				}
 			} else {
-				Chat.Send(causedBy, "Syntax: /inactive {days}");
+				BccChat.Send(causedBy, "Syntax: /inactive {days}");
 				return true;
 			}
 
@@ -53,7 +53,7 @@ namespace ColonyCommands
 			if (inactivePlayers.Count > 0)  {
 				msg = String.Format("{0} players inactive since {1} days. Would purge {2} colonies with {3} colonists", inactivePlayers.Count, days, inactiveColonyGroups.Count, colonistCount);
 			};
-			Chat.Send(causedBy, msg);
+			BccChat.Send(causedBy, msg);
 			return true;
 		}
 	}

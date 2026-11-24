@@ -37,8 +37,8 @@ namespace ColonyCommands
 			int version = NextVersion(target);
 			pendingRequests[target] = new PendingRequest { Requester = requester, Version = version };
 
-			Chat.Send(requester, $"Teleport request sent to {ChatColors.GetDisplayName(target)}. It will expire in {(int)REQUEST_TIMEOUT_SECONDS} seconds.");
-			Chat.Send(target, $"{ChatColors.GetDisplayName(requester)} wants to teleport to you. Type /tpaccept or /tpadeny (expires in {(int)REQUEST_TIMEOUT_SECONDS}s).");
+			BccChat.Send(requester, $"Teleport request sent to {ChatColors.GetDisplayName(target)}. It will expire in {(int)REQUEST_TIMEOUT_SECONDS} seconds.");
+			BccChat.Send(target, $"{ChatColors.GetDisplayName(requester)} wants to teleport to you. Type /tpaccept or /tpadeny (expires in {(int)REQUEST_TIMEOUT_SECONDS}s).");
 
 			ThreadManager.InvokeOnMainThread(delegate() {
 				ExpireIfStillPending(target, version);
@@ -59,8 +59,8 @@ namespace ColonyCommands
 
 			Players.Player requester = request.Requester;
 			// countdown so the requester isn't instantly yanked without warning
-			Chat.Send(requester, $"{ChatColors.GetDisplayName(target)} accepted your teleport request. Teleporting in {(int)ACCEPT_COUNTDOWN_SECONDS} seconds, stay put!");
-			Chat.Send(target, $"Accepted. Teleporting {ChatColors.GetDisplayName(requester)} to you in {(int)ACCEPT_COUNTDOWN_SECONDS} seconds.");
+			BccChat.Send(requester, $"{ChatColors.GetDisplayName(target)} accepted your teleport request. Teleporting in {(int)ACCEPT_COUNTDOWN_SECONDS} seconds, stay put!");
+			BccChat.Send(target, $"Accepted. Teleporting {ChatColors.GetDisplayName(requester)} to you in {(int)ACCEPT_COUNTDOWN_SECONDS} seconds.");
 
 			ThreadManager.InvokeOnMainThread(delegate() {
 				CompleteTeleport(requester, target);
@@ -79,8 +79,8 @@ namespace ColonyCommands
 			}
 			pendingRequests.Remove(target);
 
-			Chat.Send(request.Requester, $"{ChatColors.GetDisplayName(target)} denied your teleport request");
-			Chat.Send(target, "Teleport request denied");
+			BccChat.Send(request.Requester, $"{ChatColors.GetDisplayName(target)} denied your teleport request");
+			BccChat.Send(target, "Teleport request denied");
 			return true;
 		}
 
@@ -98,8 +98,8 @@ namespace ColonyCommands
 		{
 			if (pendingRequests.TryGetValue(target, out PendingRequest request) && request.Version == version) {
 				pendingRequests.Remove(target);
-				Chat.Send(request.Requester, $"Your teleport request to {ChatColors.GetDisplayName(target)} timed out");
-				Chat.Send(target, "The pending teleport request timed out");
+				BccChat.Send(request.Requester, $"Your teleport request to {ChatColors.GetDisplayName(target)} timed out");
+				BccChat.Send(target, "The pending teleport request timed out");
 			}
 		}
 

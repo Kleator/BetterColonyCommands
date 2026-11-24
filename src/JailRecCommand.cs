@@ -27,12 +27,12 @@ namespace ColonyCommands
 				Players.Player target;
 				string error;
 				if (!PlayerHelper.TryGetPlayer(targetName, out target, out error)) {
-					Chat.Send(causedBy, $"Could not find {targetName}: {error}");
+					BccChat.Send(causedBy, $"Could not find {targetName}: {error}");
 					return true;
 				}
 				List<JailManager.JailLogRecord> PlayerJailLog;
 				if (!JailManager.jailLog.TryGetValue(target.ID.SteamID.m_SteamID, out PlayerJailLog)) {
-					Chat.Send(causedBy, $"No records found - {targetName} is clean");
+					BccChat.Send(causedBy, $"No records found - {targetName} is clean");
 					return true;
 				}
 				foreach (JailManager.JailLogRecord record in PlayerJailLog) {
@@ -42,7 +42,7 @@ namespace ColonyCommands
 						CSteamID jailedBySteamID = new CSteamID(record.jailedBy);
 						jailedBy = ChatColors.GetDisplayName(Players.PlayerDatabaseBySteamID[jailedBySteamID]);
 					}
-					Chat.Send(causedBy, String.Format("{0} by: {1} for: {2}", timestamp.ToString(), jailedBy, record.reason));
+					BccChat.Send(causedBy, String.Format("{0} by: {1} for: {2}", timestamp.ToString(), jailedBy, record.reason));
 				}
 
 			// or get the full log
@@ -70,7 +70,7 @@ namespace ColonyCommands
 					limit = combinedLog.Count;
 				}
 
-				Chat.Send(causedBy, "Jail Records (last 10):");
+				BccChat.Send(causedBy, "Jail Records (last 10):");
 				for (int i = 0; i < limit; ++i) {
 					combinedJailLog record = combinedLog[i];
 					DateTime timestamp = new DateTime(record.timestamp * TimeSpan.TicksPerMillisecond * 1000);
@@ -79,7 +79,7 @@ namespace ColonyCommands
 					if (record.causedBy != null) {
 						jailerName = ChatColors.GetDisplayName(record.causedBy);
 					}
-					Chat.Send(causedBy, String.Format("{0} {1} by: {2}", timestamp.ToString(), targetName, jailerName));
+					BccChat.Send(causedBy, String.Format("{0} {1} by: {2}", timestamp.ToString(), targetName, jailerName));
 				}
 			}
 

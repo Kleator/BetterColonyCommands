@@ -108,7 +108,7 @@ namespace ColonyCommands {
 				if (causedBy == null) {
 					Log.Write($"Cannot Jail {target.Name}: no valid jail found");
 				} else {
-					Chat.Send(causedBy, "<color=yellow>No valid jail found. Unable to complete jailing</color>");
+					BccChat.Send(causedBy, "<color=yellow>No valid jail found. Unable to complete jailing</color>");
 				}
 				return;
 			}
@@ -119,7 +119,7 @@ namespace ColonyCommands {
 				if (causedBy == null) {
 					Log.Write($"{target.Name} is already in jail, skipping re-jail");
 				} else {
-					Chat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is already in jail.");
+					BccChat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is already in jail.");
 				}
 				return;
 			}
@@ -127,7 +127,8 @@ namespace ColonyCommands {
 
 			Helper.TeleportPlayer(target, jailPosition, true);
 
-			// move to prisoner permissions group
+			// move to prisoner permissions group (a running role test ends first: jail keeps the real roles)
+			RoleTestManager.EndIfActive(target, "you were jailed");
 			List<string> groups = PermissionsHelper.GetGroupNames(target);
 			if (groups.Count == 0) groups.Add(jailConfig.defaultGroup);
 			PermissionsManager.SetGroupOfUser((Players.Player)null, target, jailConfig.prisonerGroup);
@@ -163,8 +164,8 @@ namespace ColonyCommands {
 
 			string sender = causedBy == null ? "Server" : ChatColors.GetDisplayName(causedBy);
 			string targetDisplayName = ChatColors.GetDisplayName(target);
-			Chat.Send(target, $"<color=red>{sender} threw you into jail! Reason: {reason}</color>");
-			Chat.Send(target, $"Remaining Jail Time: {jailtime} minutes, type /jailtime to check");
+			BccChat.Send(target, $"<color=red>{sender} threw you into jail! Reason: {reason}</color>");
+			BccChat.Send(target, $"Remaining Jail Time: {jailtime} minutes, type /jailtime to check");
 			Chat.SendToConnectedBut(target, $"<color=red>{sender} threw {targetDisplayName} into jail! Reason: {reason}</color>");
 			Log.Write($"{(causedBy == null ? "Server" : causedBy.Name)} threw {target.Name} into jail! Reason: {reason}");
 			return;
@@ -176,7 +177,7 @@ namespace ColonyCommands {
 			if (validJail && validVisitorPos) {
 				visitorPreviousPos[causedBy] = causedBy.PositionStanding;
 				Helper.TeleportPlayer(causedBy, jailVisitorPosition);
-				Chat.Send(causedBy, "Welcome Visitor! You're free to leave anytime, /jailleave will bring you back to your previous location");
+				BccChat.Send(causedBy, "Welcome Visitor! You're free to leave anytime, /jailleave will bring you back to your previous location");
 			}
 			return;
 		}
@@ -195,7 +196,7 @@ namespace ColonyCommands {
 				}
 				if (oldJail != null) {
 					AntiGrief.RemoveCustomArea(oldJail);
-					Chat.Send(causedBy, String.Format("Removed old jail protection area at {0} {1}", (int)jailPosition.x, (int)jailPosition.z));
+					BccChat.Send(causedBy, String.Format("Removed old jail protection area at {0} {1}", (int)jailPosition.x, (int)jailPosition.z));
 				}
 			}
 
@@ -378,9 +379,10 @@ namespace ColonyCommands {
 
 			if (target.ConnectionState == Players.EConnectionState.Connected) {
 				Helper.TeleportPlayer(target, ServerManager.GetSpawnPoint().Position.Vector, true);
-				Chat.Send(target, "<color=yellow>You did your time and are released from Jail</color>");
+				BccChat.Send(target, "<color=yellow>You did your time and are released from Jail</color>");
 			}
 
+			ModerationLog.Add(target, "Jail release", causedBy, causedBy == null ? "time served" : "released early", false);
 			if (causedBy != null) {
 				Log.Write($"{causedBy.Name} released {target.Name} from jail");
 			} else {
@@ -411,10 +413,10 @@ namespace ColonyCommands {
 
 				++record.escapeAttempts;
 				if (jailConfig.graceEscapeAttempts == 0 || record.escapeAttempts < jailConfig.graceEscapeAttempts) {
-					Chat.Send(causedBy, "<color=red>A Guard spots your escape attempt and pushes you back</color>");
+					BccChat.Send(causedBy, "<color=red>A Guard spots your escape attempt and pushes you back</color>");
 				} else {
 					record.jailDuration += 1 * 60;
-					Chat.Send(causedBy, "<color=red>The Guards get angry at you and increase your jailtime by 1 minute</color>");
+					BccChat.Send(causedBy, "<color=red>The Guards get angry at you and increase your jailtime by 1 minute</color>");
 				}
 			}
 		}

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Pipliz;
 using System.Text.RegularExpressions;
@@ -157,26 +158,62 @@ namespace ColonyCommands
 				name = name.Substring(0, name.Length - 1);
 			}
 
-			// try by exact name first
+			// Colony/banner names may contain rich text and decorative symbols, e.g.
+			// "<b><size=25><color=#EB34C9>✮Highrise-</color><color=#FF4FB9>City✮3</color></size></b>".
+			// Matching order: exact raw text, visible text (tags removed), normalized (only letters and
+			// digits, so "Highrise-City3" / "highrise city 3" match), then closest normalized match.
+			List<Colony> all = new List<Colony>();
 			Pipliz.Collections.Hashmap<ColonyID, Colony>.ValueEnumerator colonyEnum = ServerManager.ColonyTracker.ColoniesByID.GetValueEnumerator();
 			while (colonyEnum.MoveNext()) {
-				Colony checkColony = colonyEnum.Current;
+				if (colonyEnum.Current != null && !string.IsNullOrEmpty(colonyEnum.Current.Name)) {
+					all.Add(colonyEnum.Current);
+				}
+			}
+
+			foreach (Colony checkColony in all) {
 				if (string.Equals(name, checkColony.Name, StringComparison.InvariantCultureIgnoreCase)) {
 					colony = checkColony;
 					return true;
 				}
 			}
 
-			// try to find by string closest match
+			string plainWanted = TextHelper.PlainLower(name);
+			foreach (Colony checkColony in all) {
+				if (plainWanted.Length > 0 && plainWanted == TextHelper.PlainLower(checkColony.Name)) {
+					colony = checkColony;
+					return true;
+				}
+			}
+
+			string normWanted = TextHelper.NormalizeName(name);
+			if (normWanted.Length > 0) {
+				Colony normMatch = null;
+				int normMatches = 0;
+				foreach (Colony checkColony in all) {
+					if (normWanted == TextHelper.NormalizeName(checkColony.Name)) {
+						normMatch = checkColony;
+						normMatches++;
+					}
+				}
+				if (normMatches == 1) {
+					colony = normMatch;
+					return true;
+				}
+				if (normMatches > 1) {
+					error = "several colonies match that name, please be more specific";
+					return false;
+				}
+			}
+
+			// try to find by string closest match (on the normalized names)
 			Colony closestMatch = null;
 			int closestDist = int.MaxValue;
-			colonyEnum.Reset();
-			while (colonyEnum.MoveNext()) {
-				Colony checkColony = colonyEnum.Current;
-				if (checkColony.Name == null || checkColony.Name.Equals("")) {
+			foreach (Colony checkColony in all) {
+				string norm = TextHelper.NormalizeName(checkColony.Name);
+				if (norm.Length == 0) {
 					continue;
 				}
-				int levDist = LevenshteinDistance.Compute(name.ToLower(), checkColony.Name.ToLower());
+				int levDist = LevenshteinDistance.Compute(normWanted, norm);
 				if (levDist < closestDist) {
 					closestDist = levDist;
 					closestMatch = checkColony;
@@ -184,7 +221,7 @@ namespace ColonyCommands
 					closestMatch = null;
 				}
 			}
-			if (closestMatch != null && closestDist <= closestMatch.Name.Length * 0.3) {
+			if (closestMatch != null && closestDist <= TextHelper.NormalizeName(closestMatch.Name).Length * 0.3) {
 				colony = closestMatch;
 				return true;
 			}

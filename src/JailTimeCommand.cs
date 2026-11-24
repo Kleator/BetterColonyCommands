@@ -16,15 +16,15 @@ namespace ColonyCommands
 			return false;
 		}
       if (!JailManager.IsPlayerJailed(causedBy)) {
-        Chat.Send(causedBy, "You are not jailed - free to move!");
+        BccChat.Send(causedBy, "You are not jailed - free to move!");
         return true;
       }
 
       long remainTime = JailManager.getRemainingTime(causedBy);
       if (remainTime > 60) {
-        Chat.Send(causedBy, String.Format("Remaining Jail Time: {0}:{1:D2} Minutes", remainTime / 60, remainTime % 60));
+        BccChat.Send(causedBy, String.Format("Remaining Jail Time: {0}:{1:D2} Minutes", remainTime / 60, remainTime % 60));
       } else {
-        Chat.Send(causedBy, $"Remaining Jail Time: {remainTime} Seconds");
+        BccChat.Send(causedBy, $"Remaining Jail Time: {remainTime} Seconds");
       }
 
       return true;

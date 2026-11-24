@@ -24,7 +24,14 @@ namespace ColonyCommands {
 
 		private static Dictionary<Players.Player, warEntry> warDict = new Dictionary<Players.Player, warEntry>();
 		private static string warPermissionGroup = "peasant";
-		private static Dictionary<Players.Player, List<string>> storedPermissions = new Dictionary<Players.Player, List<string>>();
+		// roles of players in war mode, written to disk before they change (restored after the war or at the next start)
+		public class StoredRoles
+		{
+			public string Name = "";
+			public bool HadEntry;                            // own entry in permissionusers.json before the war
+			public List<string> Groups = new List<string>(); // its roles ("includes")
+		}
+		private static Dictionary<Players.Player, StoredRoles> storedPermissions = new Dictionary<Players.Player, StoredRoles>();
 
 		static string SaveFile {
 			get {
@@ -112,7 +119,7 @@ namespace ColonyCommands {
 			warDict.Remove(player);
 
 			if (player.ConnectionState == Players.EConnectionState.Connected) {
-				Chat.Send(player, "<color=yellow>Your WAR status expired. Do no longer attack others!</color>");
+				BccChat.Send(player, "<color=yellow>Your WAR status expired. Do no longer attack others!</color>");
 			}
 			Chat.SendToConnectedBut(player, $"<color=yellow>WAR status of {ChatColors.GetDisplayName(player)} expired.</color>");
 
@@ -135,17 +142,28 @@ namespace ColonyCommands {
 		// remove player permissions and set to default group (fair wars)
 		public static void RemovePlayerPermissions(Players.Player target)
 		{
-			// safe current groups of the player
-			List<string> groups = new List<string>();
-			foreach (KeyValuePair<string, PermissionsManager.PermissionsGroup> kvp in PermissionsManager.Groups) {
-				if (kvp.Value == PermissionsManager.Users[target.ID.SteamID]) {
-					groups.Add(kvp.Key);
-				}
+			RoleTestManager.EndIfActive(target, "a war started");
+			if (!target.ID.HasSteamID || !PermissionsManager.EnsureLoadedSuccesfully()) {
+				return; // without SteamID the game stores no roles (and gives every permission anyway)
 			}
-			PermissionsManager.SetGroupOfUser((Players.Player)null, target, warPermissionGroup);
-			storedPermissions[target] = groups;
+			string group = PermissionsManager.Groups.ContainsKey(warPermissionGroup) ? warPermissionGroup : RoleManager.DefaultRole;
+			if (string.IsNullOrEmpty(group) || !PermissionsManager.Groups.ContainsKey(group)) {
+				Log.WriteWarning($"Better Colony Commands: no war permission group '{warPermissionGroup}' - {target.Name} keeps the roles");
+				return;
+			}
+			// the way back is on disk before anything changes; a second war call keeps the first snapshot
+			if (!storedPermissions.ContainsKey(target)) {
+				storedPermissions[target] = new StoredRoles {
+					Name = target.Name,
+					HadEntry = PermissionsHelper.HasOwnEntry(target),
+					Groups = PermissionsHelper.GetGroupNames(target)
+				};
+				SavePermissions();
+			}
+			PermissionsManager.SetGroupOfUser((Players.Player)null, target, group);
+			BccPermissions.Refresh(true);
 			if (target.ConnectionState == Players.EConnectionState.Connected) {
-				Chat.Send(target, $"<color=yellow>Permissions set to {warPermissionGroup}</color>");
+				BccChat.Send(target, $"<color=yellow>Permissions set to {group}</color>");
 			}
 
 			// remove flight state
@@ -155,25 +173,25 @@ namespace ColonyCommands {
 		}
 
 
-		// restore player permissions at end of war
+		// restore player permissions at end of war (exactly the roles before; own permissions are kept)
 		public static void RestorePlayerPermissions(Players.Player target)
 		{
-			if (!storedPermissions.ContainsKey(target)) {
+			if (!storedPermissions.TryGetValue(target, out StoredRoles stored) || !PermissionsManager.EnsureLoadedSuccesfully()) {
 				return;
 			}
-
-			for (int i = 0; i < storedPermissions[target].Count; i++) {
-				string groupName = storedPermissions[target][i];
-				if (i == 0) {
-					PermissionsManager.SetGroupOfUser((Players.Player)null, target, groupName);
-				} else {
-					PermissionsManager.AddGroupToUser((Players.Player)null, target, groupName);
-				}
-				if (target.ConnectionState == Players.EConnectionState.Connected) {
-					Chat.Send(target, $"<color=yellow>Restored group {groupName}</color>");
-				}
-				Log.Write($"Restored permission {groupName} for {target.Name}");
+			PermissionsManager.Users.TryGetValue(target.ID.SteamID, out PermissionsManager.PermissionsGroup current);
+			if (stored.HadEntry) {
+				PermissionsManager.Users[target.ID.SteamID] = RoleTestManager.WithIncludes(current, stored.Groups);
+			} else {
+				PermissionsManager.Users.Remove(target.ID.SteamID); // back to the implicit default role
 			}
+			PermissionsManager.SaveUsers();
+			BccPermissions.Refresh(true);
+			string roles = stored.HadEntry ? string.Join(", ", stored.Groups) : RoleManager.DefaultRole + " (default)";
+			if (target.ConnectionState == Players.EConnectionState.Connected) {
+				BccChat.Send(target, $"<color=yellow>Your roles are back: {roles}</color>");
+			}
+			Log.Write($"Better Colony Commands: restored the roles of {target.Name} after the war: {roles}");
 		}
 
 
@@ -192,82 +210,48 @@ namespace ColonyCommands {
 		}
 
 
-		// SAVE - store permissions as failsafe to allow restore always
-		// TODO
+		// SAVE - stored roles as failsafe, so they are restored even after a crash
 		public static void SavePermissions()
 		{
-/*			if (storedPermissions.Count == 0) {
-				// delete the permissions file if no longer needed
-				if (File.Exists(SaveFile)) {
-					File.Delete(SaveFile);
-					Log.Write("Deleted {0}, no permissions to store", SaveFile);
-				}
-				return;
-			}
-			Log.Write("Saving player permission groups to {0}", SaveFile);
-
-			JSONNode jsonFile = new JSONNode();
-			JSONNode jsonPlayers = new JSONNode(NodeType.Array);
-			foreach (KeyValuePair<Players.Player, List<string>> kvp in storedPermissions) {
-				JSONNode jsonPlayerRecord = new JSONNode();
-				Players.Player target = kvp.Key;
-				jsonPlayerRecord.SetAs("SteamId", target.ID.steamID);
-				jsonPlayerRecord.SetAs("Name", target.Name);
-
-				JSONNode jsonRecords = new JSONNode(NodeType.Array);
-				foreach (string groupName in kvp.Value) {
-					JSONNode jsonRecord = new JSONNode();
-					jsonRecord.SetAs<string>(groupName);
-					jsonRecords.AddToArray(jsonRecord);
-				}
-				jsonPlayerRecord.SetAs("Groups", jsonRecords);
-				jsonPlayers.AddToArray(jsonPlayerRecord);
-			}
-			jsonFile.SetAs("players", jsonPlayers);
-
 			try {
-				JSON.Serialize(SaveFile, jsonFile);
+				if (storedPermissions.Count == 0) {
+					if (File.Exists(SaveFile)) {
+						File.Delete(SaveFile);
+					}
+					return;
+				}
+				Dictionary<string, StoredRoles> data = new Dictionary<string, StoredRoles>();
+				foreach (KeyValuePair<Players.Player, StoredRoles> kvp in storedPermissions) {
+					if (kvp.Key.ID.HasSteamID) {
+						data[kvp.Key.ID.SteamID.m_SteamID.ToString()] = kvp.Value;
+					}
+				}
+				string tmp = SaveFile + ".tmp";
+				File.WriteAllText(tmp, Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented));
+				File.Copy(tmp, SaveFile, true);
+				File.Delete(tmp);
 			} catch (Exception e) {
-				Log.Write("Could not save {0}: {1}", SaveFile, e.Message);
+				Log.WriteError($"Better Colony Commands: could not save {SaveFile}: {e.Message}");
 			}
-*/		}
+		}
 
 
 		// LOAD permissions file
 		public static void LoadPermissionsFile()
 		{
-/*			JSONNode jsonConfig;
-			if (!JSON.Deserialize(SaveFile, out jsonConfig, false)) {
-				Log.Write("Error reading {0}, please restore permissions manually", SaveFile);
-				return;
-			}
-
-			Log.Write("Loading permissions to restore from {0}", SaveFile);
 			try {
-				JSONNode players;
-				jsonConfig.TryGetAs("players", out players);
-				foreach (JSONNode node in players.LoopArray()) {
-					string steamId = node.GetAs<string>("SteamId");
-
-					List<string> groups = new List<string>();
-					JSONNode jsonGroups;
-					node.TryGetAs("Groups", out jsonGroups);
-					foreach (JSONNode gnode in jsonGroups.LoopArray()) {
-						string grp = gnode.GetAs<string>();
-						groups.Add(grp);
-					}
-
-					Players.Player target;
-					string error;
-					if (PlayerHelper.TryGetPlayer(steamId, out target, out error, true)) {
-						storedPermissions[target] = groups;
+				Dictionary<string, StoredRoles> data = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, StoredRoles>>(File.ReadAllText(SaveFile));
+				foreach (KeyValuePair<string, StoredRoles> kvp in data ?? new Dictionary<string, StoredRoles>()) {
+					if (ulong.TryParse(kvp.Key, out ulong steam) && Players.PlayerDatabaseBySteamID.TryGetValue(new Steamworks.CSteamID(steam), out Players.Player target)) {
+						storedPermissions[target] = kvp.Value;
+					} else {
+						Log.WriteWarning($"Better Colony Commands: war roles of {kvp.Value?.Name} ({kvp.Key}) can't be restored - player not found");
 					}
 				}
-
 			} catch (Exception e) {
-				Log.Write("Error parsing {0}: {1}", SaveFile, e.Message);
+				Log.WriteError($"Better Colony Commands: error reading {SaveFile} - restore the roles manually: {e.Message}");
 			}
-*/		}
+		}
 
 
 		// LOAD - ensure all permissions are restored at server startup
@@ -275,12 +259,12 @@ namespace ColonyCommands {
 		{
 			if (File.Exists(SaveFile)) {
 				LoadPermissionsFile();
-				foreach (Players.Player target in storedPermissions.Keys) {
+				foreach (Players.Player target in new List<Players.Player>(storedPermissions.Keys)) {
 					RestorePlayerPermissions(target);
 				}
 				storedPermissions.Clear();
 				File.Delete(SaveFile);
-				Log.Write("Deleted {0}, all permissions restored", SaveFile);
+				Log.Write($"Better Colony Commands: roles of players in war mode restored at start ({SaveFile} deleted)");
 			}
 			CheckWarStatus();
 		}

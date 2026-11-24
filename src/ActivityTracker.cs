@@ -90,6 +90,24 @@ namespace ColonyCommands
 		}
 
 
+		// total online time including the not yet booked time of the running session
+		public static long GetLiveSecondsPlayed(Players.Player player)
+		{
+			StatsDataEntry stats;
+			if (!PlayerStats.TryGetValue(player.ID.ToStringReadable(), out stats)) {
+				return 0;
+			}
+			long total = stats.secondsPlayed;
+			if (player.ConnectionState == Players.EConnectionState.Connected && DateTime.TryParse(stats.lastSeen, out DateTime lastSeen)) {
+				double running = DateTime.Now.Subtract(lastSeen).TotalSeconds;
+				if (running > 0 && running <= MAX_TRACKED_GAP_SECONDS) {
+					total += (long)running;
+				}
+			}
+			return total;
+		}
+
+
 		public static void Load()
 		{
 			if (File.Exists(ConfigFilePath)) {
@@ -112,7 +130,7 @@ namespace ColonyCommands
 		}
 
 
-		static void Save()
+		public static void Save()
 		{
 			if (PlayerStats.Count == 0) return;
 

@@ -14,7 +14,7 @@ namespace ColonyCommands {
 			// avoid teleporting while mounted
 			if (MeshedObjectManager.HasVehicle(target)) {
 				if (!force) {
-					Chat.Send(target, "Please dismount before teleporting");
+					BccChat.Send(target, "Please dismount before teleporting");
 					return;
 				} else {
 					MeshedObjectManager.Detach(target);

@@ -22,7 +22,7 @@ namespace ColonyCommands
 				if (splits.Count > 2) {
 					duration = TryGetDurationSeconds(splits[2]);
 					if (duration < 0) {
-						Chat.Send(causedBy, "Syntax: /war start <4h>  (use values like 90m, 2h, 4h)");
+						BccChat.Send(causedBy, "Syntax: /war start <4h>  (use values like 90m, 2h, 4h)");
 						return true;
 					}
 				}
@@ -32,19 +32,19 @@ namespace ColonyCommands
 
 				// require active colony with colonists. To always have war two sided
 				if (causedBy.ActiveColony == null || causedBy.ActiveColony.Followers.Count < 10) {
-					Chat.Send(causedBy, "<color=red>You need to be at an active colony with colonists to start wars</color>");
+					BccChat.Send(causedBy, "<color=red>You need to be at an active colony with colonists to start wars</color>");
 					return true;
 				}
 
 				// require roleplay marked
 				if (!RoleplayManager.IsRoleplaying(causedBy)) {
-					Chat.Send(causedBy, "<color=red>War is only allowed as roleplay. Use /rp on first</color>");
+					BccChat.Send(causedBy, "<color=red>War is only allowed as roleplay. Use /rp on first</color>");
 					return true;
 				}
 
 				WarManager.EnableWar(causedBy, duration);
 				Chat.SendToConnectedBut(causedBy, $"<color=yellow>{ChatColors.GetDisplayName(causedBy)} entered WAR mode</color>");
-				Chat.Send(causedBy, $"<color=yellow>You entered WAR mode. It will expire after {duration / 60 / 60} hours.</color>");
+				BccChat.Send(causedBy, $"<color=yellow>You entered WAR mode. It will expire after {duration / 60 / 60} hours.</color>");
 
 			// admin disable all war
 			} else if (splits.Count == 2 && splits[1].Equals("end")) {
@@ -58,7 +58,7 @@ namespace ColonyCommands
 			} else {
 				List<string> players = WarManager.PlayerList;
 				if (players.Count == 0) {
-					Chat.Send(causedBy, "<color=yellow>No war ongoing currently.</color>");
+					BccChat.Send(causedBy, "<color=yellow>No war ongoing currently.</color>");
 				} else {
 					string msg = "";
 					for (int c = 0; c < players.Count; c++) {
@@ -67,7 +67,7 @@ namespace ColonyCommands
 							msg += ", ";
 						}
 					}
-					Chat.Send(causedBy, $"<color=yellow>WAR enabled:</color> {msg}");
+					BccChat.Send(causedBy, $"<color=yellow>WAR enabled:</color> {msg}");
 				}
 			}
 

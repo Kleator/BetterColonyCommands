@@ -15,14 +15,14 @@ namespace ColonyCommands
 			}
 
 			if (splits.Count != 3) {
-				Chat.Send(causedBy, "Syntax: /promote {group} {user}");
+				BccChat.Send(causedBy, "Syntax: /promote {group} {user}");
 				return true;
 			}
 
 			// permission group
 			string groupName = splits[1];
 			if (!PermissionsManager.Groups.ContainsKey(groupName)) {
-				Chat.Send(causedBy, $"No group {groupName} found");
+				BccChat.Send(causedBy, $"No group {groupName} found");
 				return true;
 			}
 
@@ -36,11 +36,13 @@ namespace ColonyCommands
 			Players.Player target;
 			string error;
 			if (!PlayerHelper.TryGetPlayer(targetName, out target, out error, true)) {
-				Chat.Send(causedBy, $"Could not find player {targetName}: {error}");
+				BccChat.Send(causedBy, $"Could not find player {targetName}: {error}");
 				return true;
 			}
 
+			RoleTestManager.EndIfActive(target, "your role was changed");
 			PermissionsManager.SetGroupOfUser(causedBy, target, groupName);
+			BccChat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is now {ChatColors.FormatRole(groupName)}");
 
 			return true;
 		}

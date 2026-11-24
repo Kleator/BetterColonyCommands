@@ -23,12 +23,12 @@ namespace ColonyCommands
 
 			Match m = Regex.Match(chattext, @"/spawnnpc (?<amount>\d+) ?(?<player>['].+[']|.+)?");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /spawnnpc {number} [targetplayer]");
+				BccChat.Send(causedBy, "Syntax: /spawnnpc {number} [targetplayer]");
 				return true;
 			}
 			int amount = 0;
 			if (!int.TryParse(m.Groups["amount"].Value, out amount) || amount <= 0) {
-				Chat.Send(causedBy, "Number should be > 0");
+				BccChat.Send(causedBy, "Number should be > 0");
 				return true;
 			}
 
@@ -36,21 +36,21 @@ namespace ColonyCommands
 			string error;
 			if (!m.Groups["player"].Value.Equals("")) {
 				if (!PlayerHelper.TryGetPlayer(m.Groups["player"].Value, out target, out error)) {
-					Chat.Send(causedBy, "Could not find target: {error}");
+					BccChat.Send(causedBy, "Could not find target: {error}");
 				}
 			}
 
 			Colony colony = target.ActiveColony;
 			if (colony == null) {
-				Chat.Send(target, "You need to be at an active colony to spawn NPCs");
+				BccChat.Send(target, "You need to be at an active colony to spawn NPCs");
 				if (causedBy != target) {
-					Chat.Send(causedBy, " {target} has no active colony");
+					BccChat.Send(causedBy, " {target} has no active colony");
 				}
 				return true;
 			}
 			BannerTracker.Banner banner = colony.GetClosestBanner(causedBy.PositionVoxelStanding);
 			if (banner == null) {
-				Chat.Send(causedBy, "No banners found for the active colony");
+				BccChat.Send(causedBy, "No banners found for the active colony");
 				return true;
 			}
 
@@ -61,7 +61,7 @@ namespace ColonyCommands
 				ModLoader.Callbacks.OnNPCRecruited.Invoke(npc);
 			}
 
-			Chat.Send(causedBy, $"Spawned {amount} colonists");
+			BccChat.Send(causedBy, $"Spawned {amount} colonists");
 			return true;
 		}
 	}

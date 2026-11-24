@@ -22,7 +22,7 @@ namespace ColonyCommands
 				string targetPlayerName = m.Groups["targetplayername"].Value;
 				string error;
 				if (!PlayerHelper.TryGetPlayer(targetPlayerName, out targetPlayer, out error, true)) {
-					Chat.Send(causedBy, $"Could not find '{targetPlayerName}'; {error}");
+					BccChat.Send(causedBy, $"Could not find '{targetPlayerName}'; {error}");
 					return true;
 				}
 			}
@@ -36,9 +36,9 @@ namespace ColonyCommands
 			}
 
 			if (targetPlayer.ActiveColony == null) {
-				Chat.Send(targetPlayer, $"You have to be at an active colony to allow NPC killing");
+				BccChat.Send(targetPlayer, $"You have to be at an active colony to allow NPC killing");
 				if (targetPlayer != causedBy) {
-					Chat.Send(causedBy, $"{ChatColors.GetDisplayName(targetPlayer)} is not at an active colony");
+					BccChat.Send(causedBy, $"{ChatColors.GetDisplayName(targetPlayer)} is not at an active colony");
 				}
 				return true;
 			}

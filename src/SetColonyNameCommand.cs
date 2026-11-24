@@ -22,12 +22,12 @@ namespace ColonyCommands
 
 			var m = Regex.Match(chattext, @"/setcolonyname (?<name>.+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /setcolonyname {new name}");
+				BccChat.Send(causedBy, "Syntax: /setcolonyname {new name}");
 				return true;
 			}
 			string newName = m.Groups["name"].Value.Trim();
 			if (newName.Length == 0) {
-				Chat.Send(causedBy, "Syntax: /setcolonyname {new name}");
+				BccChat.Send(causedBy, "Syntax: /setcolonyname {new name}");
 				return true;
 			}
 			if (newName.Length > ColonyNameGuard.MaxNameLength) {
@@ -55,7 +55,7 @@ namespace ColonyCommands
 			}
 
 			if (closestBanner == null || closestBanner.Colony == null) {
-				Chat.Send(causedBy, "No colony banner found nearby");
+				BccChat.Send(causedBy, "No colony banner found nearby");
 				return true;
 			}
 
@@ -68,7 +68,7 @@ namespace ColonyCommands
 			}
 			ColonyNameGuard.RegisterKnownGoodName(colony.ColonyID, newName);
 
-			Chat.Send(causedBy, $"Renamed colony '{oldName}' to '{newName}'");
+			BccChat.Send(causedBy, $"Renamed colony '{TextHelper.SafeName(oldName)}' to '{TextHelper.SafeName(newName)}'");
 			Log.Write($"{causedBy.Name} renamed colony '{oldName}' to '{newName}' ({shortestDistance} blocks away)");
 			return true;
 		}

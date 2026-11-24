@@ -20,7 +20,7 @@ namespace ColonyCommands
       }
       var m = Regex.Match (chattext, @"/warpspawn ?(?<playername>.+)?");
       if (!m.Success) {
-        Chat.Send(causedBy, "use /warpspawn or /warpspawn <playername>");
+        BccChat.Send(causedBy, "use /warpspawn or /warpspawn <playername>");
         return true;
       }
       var TeleportPlayer = causedBy;
@@ -31,7 +31,7 @@ namespace ColonyCommands
         }
         string Error;
         if (!PlayerHelper.TryGetPlayer (TeleportPlayerName, out TeleportPlayer, out Error)) {
-          Chat.Send (causedBy, $"Could not find teleport player '{TeleportPlayerName}'; {Error}");
+          BccChat.Send(causedBy, $"Could not find teleport player '{TeleportPlayerName}'; {Error}");
           return true;
         }
       }

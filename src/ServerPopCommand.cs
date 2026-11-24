@@ -22,7 +22,7 @@ namespace ColonyCommands
 			}
 			var allMonsters = Monsters.MonsterTracker.MonstersTotal;
 			var allUnits = allPlayers + allFollower + allMonsters;
-			Chat.Send(causedBy, $"Server Population: {allUnits}, Players: {allPlayers}, Online: {onlinePlayers}, Colonists: {allFollower}, Monsters: {allMonsters}");
+			BccChat.Send(causedBy, $"Server Population: {allUnits}, Players: {allPlayers}, Online: {onlinePlayers}, Colonists: {allFollower}, Monsters: {allMonsters}");
 			return true;
 		}
 	}

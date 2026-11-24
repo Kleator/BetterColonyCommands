@@ -44,7 +44,7 @@ namespace ColonyCommands
 					name = "(invalid)";
 					owners = "(invalid)";
 				} else {
-					name = closestBanner.Colony.Name;
+					name = TextHelper.SafeName(closestBanner.Colony.Name);
 				}
 
 				if (closestBanner.Colony != null && closestBanner.Colony.ColonyGroup.Owners.Count > 0) {
@@ -53,12 +53,26 @@ namespace ColonyCommands
 						if (!owners.Equals("")) {
 							owners += ", ";
 						}
-						owners += ChatColors.GetDisplayName(owner);
+						owners += ChatColors.GetDisplayName(owner) + Style.Muted(" (" + LastSeenText(owner) + ")");
 					}
 				}
-				Chat.Send(causedBy, $"Closest banner is at {closestBanner.Position.x},{closestBanner.Position.z}. {shortestDistance} blocks away. It belongs to colony {name} owned by {owners}");
+				BccChat.Send(causedBy, $"Closest banner is at {closestBanner.Position.x},{closestBanner.Position.z}. {shortestDistance} blocks away. It belongs to colony {name} owned by {owners}");
 			}
 			return true;
+		}
+
+		static string LastSeenText(Players.Player owner)
+		{
+			if (owner.ConnectionState == Players.EConnectionState.Connected) {
+				return "online now";
+			}
+			string lastSeen = ActivityTracker.GetLastSeen(owner.ID.ToStringReadable());
+			if (System.DateTime.TryParse(lastSeen, out System.DateTime t)) {
+				double days = (System.DateTime.Now - t).TotalDays;
+				string ago = days >= 1 ? $"{(int)days} day(s) ago" : $"{(int)((System.DateTime.Now - t).TotalHours)} hour(s) ago";
+				return $"last seen {t:yyyy-MM-dd HH:mm}, {ago}";
+			}
+			return "last seen: " + lastSeen;
 		}
 	}
 }

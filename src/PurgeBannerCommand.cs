@@ -25,18 +25,18 @@ namespace ColonyCommands
 				if (splits[1].Equals("all")) {
 					int range = 0;
 					if (!int.TryParse(splits[2], out range)) {
-						Chat.Send(causedBy, "Syntax: /purgebanner all <range>");
+						BccChat.Send(causedBy, "Syntax: /purgebanner all <range>");
 						return true;
 					}
 					int counter = PurgeAllColonies(causedBy, range);
-					Chat.Send(causedBy, $"Purged {counter} colonies within range");
+					BccChat.Send(causedBy, $"Purged {counter} colonies within range");
 					return true;
 
 				// command: /purgebanner days <minage> (Purge ALL colonies from inactive players)
 				} else if (splits[1].Equals("days")) {
 					int minage = int.MaxValue;
 					if (!int.TryParse(splits[2], out minage)) {
-						Chat.Send(causedBy, "Syntax: /purgebanner days <minage>");
+						BccChat.Send(causedBy, "Syntax: /purgebanner days <minage>");
 						return true;
 					}
 
@@ -60,10 +60,10 @@ namespace ColonyCommands
 							PurgeColonyGroup(causedBy, col);
 						}
 					}
-					Chat.Send(causedBy, $"Purged {counter} colonies with {colonistCount} colonists");
+					BccChat.Send(causedBy, $"Purged {counter} colonies with {colonistCount} colonists");
 					return true;
 				} else {
-					Chat.Send(causedBy, "Syntax: /purgebanner {all|days} <range|age>");
+					BccChat.Send(causedBy, "Syntax: /purgebanner {all|days} <range|age>");
 					return true;
 				}
 			}
@@ -93,15 +93,15 @@ namespace ColonyCommands
 				}
 
 				if (banner == null) {
-					Chat.Send(causedBy, "No banners found at all");
+					BccChat.Send(causedBy, "No banners found at all");
 					return true;
 				}
 				if (shortestDistance > 100) {
-					Chat.Send(causedBy, "Closest banner is more than 100 blocks away. Not doing anything");
+					BccChat.Send(causedBy, "Closest banner is more than 100 blocks away. Not doing anything");
 					return true;
 				}
 				if (colony != null) {
-					Chat.Send(causedBy, $"Purged colony/outpost {colony.Name}");
+					BccChat.Send(causedBy, $"Purged colony/outpost {TextHelper.SafeName(colony.Name)}");
 					PurgeColony(causedBy, colony);
 					return true;
 				}
@@ -113,16 +113,16 @@ namespace ColonyCommands
 				Players.Player target;
 				string error;
 				if (!PlayerHelper.TryGetPlayer(targetName, out target, out error, true)) {
-					Chat.Send(causedBy, $"Could not find {targetName}: {error}");
+					BccChat.Send(causedBy, $"Could not find {targetName}: {error}");
 					return true;
 				}
 				PurgePlayerColonies(causedBy, target);
-				Chat.Send(causedBy, $"Freed {targetName} from all colonies");
+				BccChat.Send(causedBy, $"Freed {targetName} from all colonies");
 				return true;
 			}
 
 			// only reached if nothing else matches
-			Chat.Send(causedBy, "Syntax: /purgebanner { colony | [playername] | all [range] | days [age] }");
+			BccChat.Send(causedBy, "Syntax: /purgebanner { colony | [playername] | all [range] | days [age] }");
 			return true;
 		}
 
@@ -130,7 +130,7 @@ namespace ColonyCommands
 		// purge one colony / outpost
 		public void PurgeColony(Players.Player causedBy, Colony colony)
 		{
-			Log.Write($"Purging colony/outpost {colony.Name}");
+			Log.Write($"Purging colony/outpost {TextHelper.SafeName(colony.Name)}");
 			for (int j = colony.Banners.Count - 1; j >= 0; --j) {
 				if (j > 0) {
 					ServerManager.ClientCommands.DeleteBannerTo(causedBy, colony, colony.Banners[j].Position);
@@ -192,7 +192,7 @@ namespace ColonyCommands
 				while (colony.Banners.Count > 1) {
 					ServerManager.ClientCommands.DeleteBannerTo(causedBy, colony, colony.Banners[colony.Banners.Count - 1].Position);
 				}
-				Chat.Send(causedBy, $"Purging {colony.Name}");
+				BccChat.Send(causedBy, $"Purging {TextHelper.SafeName(colony.Name)}");
 				ServerManager.ClientCommands.DeleteColonyAndBanner(causedBy, colony, colony.Banners[0].Position);
 				counter++;
 			}

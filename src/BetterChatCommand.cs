@@ -25,11 +25,11 @@ namespace ColonyCommands
 
 			MuteList.Update();
 			if (MuteList.MutedMinutes.ContainsKey(causedBy.ID.ID)) {
-				Chat.Send(causedBy, "<color=yellow>[muted]</color>");
+				BccChat.Send(causedBy, "<color=yellow>[muted]</color>");
 				return true;
 			}
 
-			string Name = causedBy.Name;
+			string Name = TextHelper.SafeName(causedBy.Name);
 			string Text = chatmsg;
 
 			List<string> matchedGroups = ChatColors.GetMatchedGroupKeys(causedBy);
@@ -63,7 +63,7 @@ namespace ColonyCommands
 		public static string Format = DefaultFormat;
 
 		// preserves the exact look of the old hardcoded "{Name}{Prefix}> {Text}" assembly by default
-		const string DefaultFormat = "{name}{rolename:top}{rp}> {message}";
+		const string DefaultFormat = "{name}{rolename:top}{rp}: {message}";
 
 		const string CONFIG_FILE = "chatcolors.json";
 		private static string ConfigFilePath {
@@ -122,15 +122,85 @@ namespace ColonyCommands
 		}
 
 
+		// A role (permission group) name shown with the formatting configured for it in chatcolors.json:
+		// its Prefix (with PrefixColor) if it has one - exactly how the role appears in chat - otherwise
+		// the role name in the group's Name color, otherwise the plain name. Used wherever a role is
+		// mentioned (/roles, /groups, /roletime, /permissions, ...).
+		public static string FormatRole(string role)
+		{
+			if (string.IsNullOrEmpty(role)) {
+				return role ?? "";
+			}
+			string key = FindKey(role);
+			if (key == null) {
+				return role;
+			}
+			ChatColorSpecification spec = Colors[key];
+			if (!string.IsNullOrEmpty(spec.Prefix)) {
+				string label = TextHelper.SafeName(GetRoleLabel(key));
+				string visible = TextHelper.NormalizeName(label);
+				// show the technical name too if the prefix text doesn't contain it
+				if (!visible.Contains(TextHelper.NormalizeName(role))) {
+					return $"{label} <color={Style.MUTED_COLOR}>({role})</color>";
+				}
+				return label;
+			}
+			if (!string.IsNullOrEmpty(spec.Name)) {
+				return $"<color={spec.Name}>{role}</color>";
+			}
+			if (!string.IsNullOrEmpty(spec.PrefixColor)) {
+				return $"<color={spec.PrefixColor}>{role}</color>";
+			}
+			return role;
+		}
+
+		static string FindKey(string role)
+		{
+			if (Colors.ContainsKey(role)) {
+				return role;
+			}
+			foreach (string k in Colors.Keys) {
+				if (string.Equals(k, role, StringComparison.OrdinalIgnoreCase)) {
+					return k;
+				}
+			}
+			return null;
+		}
+
+		// writes the current Format and groups back (used by the admin configuration window)
+		public static void SaveChatColors()
+		{
+			try {
+				JObject groups = new JObject();
+				foreach (KeyValuePair<string, ChatColorSpecification> kvp in Colors) {
+					JObject g = new JObject();
+					if (!string.IsNullOrEmpty(kvp.Value.Prefix)) g["Prefix"] = kvp.Value.Prefix;
+					if (!string.IsNullOrEmpty(kvp.Value.PrefixColor)) g["PrefixColor"] = kvp.Value.PrefixColor;
+					if (!string.IsNullOrEmpty(kvp.Value.Name)) g["Name"] = kvp.Value.Name;
+					if (!string.IsNullOrEmpty(kvp.Value.Text)) g["Text"] = kvp.Value.Text;
+					if (!string.IsNullOrEmpty(kvp.Value.RpMarker)) g["RpMarker"] = kvp.Value.RpMarker;
+					groups[kvp.Key] = g;
+				}
+				JObject root = new JObject { ["Format"] = Format, ["Groups"] = groups };
+				if (File.Exists(ConfigFilePath)) {
+					File.Copy(ConfigFilePath, ConfigFilePath + ".bak", true);
+				}
+				File.WriteAllText(ConfigFilePath, root.ToString(Formatting.Indented));
+			} catch (Exception e) {
+				Log.WriteError($"Could not save {CONFIG_FILE}: {e.Message}");
+			}
+		}
+
 		// colored name + top-role tag, for reuse anywhere else in the mod that prints a player's name
 		public static string GetDisplayName(Players.Player player)
 		{
 			List<string> matched = GetMatchedGroupKeys(player);
 			string topKey = matched.Count > 0 ? matched[0] : null;
-			string name = player.Name;
+			string name = TextHelper.SafeName(player.Name);
 			string unusedText = "";
 			ApplyNameAndTextColor(topKey, ref name, ref unusedText);
-			return name + GetRoleLabel(topKey);
+			string label = GetRoleLabel(topKey);
+			return label.Length > 0 ? name + " " + label : name;
 		}
 
 

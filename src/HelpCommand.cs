@@ -74,37 +74,82 @@ namespace ColonyCommands
 		};
 
 
+		// Other mods (Pytonia Automation, Starter-Kit, WorldEdit, Minimap, ...) add their commands to
+		// commandPermissionList above via reflection - that field (name, type, private static) must stay
+		// exactly as it is. Its entries are merged into the CommandRegistry, which is what /help shows.
+		public static List<KeyValuePair<string, string>> GetLegacyEntries()
+		{
+			return new List<KeyValuePair<string, string>>(commandPermissionList);
+		}
+
+		const int CHAT_PAGE_SIZE = 12;
+
 		public bool TryDoCommand(Players.Player causedBy, string chattext, List<string> splits)
 		{
-			if (splits.Count == 0 || !splits[0].Equals("/help")) {
+			if (splits.Count == 0 || !splits[0].Equals("/help", StringComparison.OrdinalIgnoreCase)) {
 				return false;
 			}
 
-			if (splits.Count == 2 && (splits[1].Equals("help") || splits[1].Equals("?"))) {
-				Chat.Send(causedBy, "Type /help warp|jail|rp... to filter");
+			string arg = splits.Count > 1 ? chattext.Substring(chattext.IndexOf(' ') + 1).Trim() : "";
+			if (arg == "?" || arg.Equals("help", StringComparison.OrdinalIgnoreCase)) {
+				BccChat.Send(causedBy, $"{Style.Cmd("/help")} opens the command window. {Style.CmdRef("/help chat")} lists commands in chat, {Style.CmdRef("/help <filter>")} filters, {Style.CmdRef("/help <page>")} pages, {Style.CmdRef("/help <command>")} shows details.");
+				return true;
+			}
+			bool chatOnly = false;
+			if (arg.StartsWith("chat", StringComparison.OrdinalIgnoreCase)) {
+				chatOnly = true;
+				arg = arg.Substring(4).Trim();
+			}
+			int page = 1;
+			string filter = arg;
+			if (int.TryParse(arg, out int n)) {
+				page = n;
+				filter = "";
+			}
+
+			// "/help /warp" or "/help warp" with an exact command -> details
+			BccCommandInfo exact = null;
+			if (filter.Length > 0 && CommandRegistry.TryGet(filter, out BccCommandInfo found) && CommandRegistry.CanUse(causedBy, found)) {
+				exact = found;
+			}
+
+			if (!chatOnly && !BccChat.IsCapturing(causedBy) && UiPreferences.UsesWindow(causedBy, "/help")) {
+				UiManager.Open(causedBy, new UiManager.PageState { Kind = "help", Filter = exact != null ? "" : filter, Page = page }, true);
+				if (exact != null) {
+					UiManager.Open(causedBy, new UiManager.PageState { Kind = "cmd", Key = exact.Command });
+				}
 				return true;
 			}
 
-			List<string> selectedCommands = new List<string>();
-			foreach (KeyValuePair<string, string> kvp in commandPermissionList) {
-				if (kvp.Value.Equals("")) {
-					selectedCommands.Add(kvp.Key);
-				} else {
-					if (PermissionsManager.HasPermission(causedBy, kvp.Value)) {
-						selectedCommands.Add(kvp.Key);
-					}
+			if (exact != null) {
+				BccChat.Send(causedBy, $"{Style.Cmd(exact.Command)} {Style.SubHeader("[" + exact.Mod + "]")}");
+				BccChat.Send(causedBy, string.IsNullOrEmpty(exact.Description) ? Style.Muted("No description.") : exact.Description);
+				BccChat.Send(causedBy, $"{Style.Muted("Usage:")} {Style.CmdRef(exact.Usage)}");
+				if (exact.Aliases.Count > 0) {
+					BccChat.Send(causedBy, $"{Style.Muted("Aliases:")} {string.Join(", ", exact.Aliases)}");
 				}
+				return true;
 			}
 
-			if (splits.Count == 2) {
-				List<string> filtered = selectedCommands.FindAll(w => w.Contains(splits[1]));
-				selectedCommands = filtered;
+			List<BccCommandInfo> visible = CommandRegistry.GetVisible(causedBy, filter);
+			if (visible.Count == 0) {
+				BccChat.Send(causedBy, Style.Error(filter.Length > 0 ? $"No commands match '{filter}'." : "No commands available to you."));
+				return true;
 			}
-
-			selectedCommands.Sort(StringComparer.InvariantCulture);
-			string result = string.Join(", ", selectedCommands);
-
-			Chat.Send(causedBy, $"Commands: {result}");
+			List<BccCommandInfo> entries = TextHelper.Page(visible, page, CHAT_PAGE_SIZE, out int p, out int pages);
+			BccChat.Send(causedBy, Style.Header($"Commands ({visible.Count}) - page {p}/{pages}"));
+			string lastMod = null;
+			foreach (BccCommandInfo c in entries) {
+				if (c.Mod != lastMod) {
+					lastMod = c.Mod;
+					BccChat.Send(causedBy, Style.SubHeader(c.Mod + ":"));
+				}
+				string desc = string.IsNullOrEmpty(c.Description) ? "" : " - " + c.Description;
+				BccChat.Send(causedBy, $"{Style.Cmd(c.Command)}{desc}");
+			}
+			if (pages > 1) {
+				BccChat.Send(causedBy, Style.Muted($"/help {(chatOnly ? "chat " : "")}{System.Math.Min(p + 1, pages)} for the next page, /help <command> for details"));
+			}
 			return true;
 		}
 	}

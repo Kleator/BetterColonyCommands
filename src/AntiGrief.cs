@@ -29,7 +29,6 @@ namespace ColonyCommands {
 		public const string PERMISSION_SUPER = "mods.scarabol.antigrief";
 		public const string PERMISSION_SPAWN_CHANGE = PERMISSION_SUPER + ".spawnchange";
 		public const string PERMISSION_BANNER_PREFIX = PERMISSION_SUPER + ".banner.";
-		private const string COLONY_ID_FORMAT = "colony.{0:0000000000}";
 		private const string SIGN_EDIT_BUTTON = "sign.textedit";
 		private const string SIGN_CONFIRM_BUTTON = "sign.textconfirm";
 		private const float JOIN_MESSAGE_DELAY_SECONDS = 10.0f;
@@ -109,6 +108,9 @@ namespace ColonyCommands {
 			CommandManager.RegisterCommand(new ListPlayerChatCommand());
 			CommandManager.RegisterCommand(new WarChatCommand());
 			CommandManager.RegisterCommand(new PromoteChatCommand());
+			CommandManager.RegisterCommand(new RoleTestChatCommand());
+			CommandManager.RegisterCommand(new TrustChatCommand());
+			CommandManager.RegisterCommand(new AchievementsChatCommand());
 			CommandManager.RegisterCommand(new GracePeriodChatCommand());
 			CommandManager.RegisterCommand(new RoleplayChatCommand());
 			CommandManager.RegisterCommand(new RoleplayBanChatCommand());
@@ -122,6 +124,19 @@ namespace ColonyCommands {
 			CommandManager.RegisterCommand(new TpAcceptChatCommand());
 			CommandManager.RegisterCommand(new TpaDenyChatCommand());
 			CommandManager.RegisterCommand(new BCReloadChatCommand());
+			CommandManager.RegisterCommand(new RoleTimeChatCommand());
+			CommandManager.RegisterCommand(new RolesChatCommand());
+			CommandManager.RegisterCommand(new RtpChatCommand());
+			CommandManager.RegisterCommand(new EconomyChatCommand());
+			CommandManager.RegisterCommand(new ModListChatCommand());
+			CommandManager.RegisterCommand(new PermissionsChatCommand());
+			CommandManager.RegisterCommand(new BcUiChatCommand());
+			CommandManager.RegisterCommand(new BcSettingsChatCommand());
+			CommandManager.RegisterCommand(new BcConfigChatCommand());
+			CommandManager.RegisterCommand(new HomesChatCommand());
+			CommandManager.RegisterCommand(new PlayersChatCommand());
+			EnsureCommandInterceptorFirst();
+			TraderBridge.AfterItemTypesDefined();
 			return;
 		}
 
@@ -134,10 +149,12 @@ namespace ColonyCommands {
 
 			// TryChangeBlock can be caused by both players and colonies (Builder/Digger)
 			Players.Player causedBy = null;
+			Colony originColony = null;
 			if (userData.RequestOrigin.Type == BlockChangeRequestOrigin.EType.Player) {
 				causedBy = userData.RequestOrigin.AsPlayer;
 			} else if (userData.RequestOrigin.Type == BlockChangeRequestOrigin.EType.Colony) {
 				Colony colony = userData.RequestOrigin.AsColony;
+				originColony = colony;
 				if (colony == null || colony.ColonyGroup == null || colony.ColonyGroup.Owners.Count == 0) {
 					return;
 				}
@@ -150,7 +167,7 @@ namespace ColonyCommands {
 
 			// prevent dangerous blocks
 			if (userData.TypeNew == BlockTypes.BuiltinBlocks.Types.water && !PermissionsManager.HasPermission(causedBy, MOD_PREFIX + ".placewater")) {
-				Chat.Send(causedBy, "<color=red>You don't have permission to place this block!</color>");
+				Deny(causedBy, originColony, userData.Position, "<color=red>You don't have permission to place this block!</color>", "placing water");
 				BlockCallback(userData);
 				return;
 			}
@@ -162,9 +179,7 @@ namespace ColonyCommands {
 			int oz = (int)System.Math.Abs(playerPos.z - ServerManager.GetSpawnPoint().Position.z);
 			if (ox <= config.SpawnProtectionRange && oz <= config.SpawnProtectionRange) {
 				if (!PermissionsManager.HasPermission(causedBy, PERMISSION_SPAWN_CHANGE)) {
-					if (causedBy.ConnectionState == Players.EConnectionState.Connected) {
-						Chat.Send(causedBy, "<color=red>You don't have permission to change the spawn area!</color>");
-					}
+					Deny(causedBy, originColony, playerPos, "<color=red>You don't have permission to change the spawn area!</color>", "spawn protection");
 					BlockCallback(userData);
 					return;
 				}
@@ -173,15 +188,13 @@ namespace ColonyCommands {
 			// check custom protection areas
 			foreach (CustomProtectionArea area in config.CustomAreas) {
 				if (area.Contains(playerPos) && !PermissionsManager.HasPermission(causedBy, PERMISSION_SPAWN_CHANGE)) {
-					if (causedBy.ConnectionState == Players.EConnectionState.Connected) {
-						Chat.Send(causedBy, "<color=red>You don't have permission to change this protected area!</color>");
-					}
+					Deny(causedBy, originColony, playerPos, "<color=red>You don't have permission to change this protected area!</color>", "protected area");
 					BlockCallback(userData);
 					return;
 				}
 			}
 
-			// Check all banners and then decide by Colony.ColonyGroup.Owners if allowed or not
+			// Check all banners in range: allowed only if the player owns or is trusted on every colony there
 			bool isBannerBlock = false;
 			int checkRange = config.BannerProtectionRange;
 			if (userData.TypeNew.ItemIndex == BlockTypes.BuiltinBlocks.Indices.banner ||
@@ -201,28 +214,11 @@ namespace ColonyCommands {
 						int distanceY = (int)System.Math.Abs(playerPos.y - checkBanner.Position.y);
 
 						if (distanceX <= checkRange && distanceZ <= checkRange && (!config.ProtectionIncludesHeightCheck || distanceY <= checkRange)) {
-							if (checkColony.ColonyGroup.Owners.IndexOf(causedBy) >= 0) {
-								if (!isBannerBlock) {
-									return;
-								} else {
-									continue; // banner block still has to check if overlapping with any other colony
-								}
-							}
-
-							// check if /antigrief permission - only done for banner placement
-							if (isBannerBlock) {
-								// permission for this colony id
-								if (PermissionsManager.HasPermission(causedBy, PERMISSION_BANNER_PREFIX + string.Format(COLONY_ID_FORMAT, checkColony.ColonyID))) {
-									return;
-								}
-
-								// permission for all colonies of the owner
-								for (int k = 0; k < checkColony.ColonyGroup.Owners.Count; ++k) {
-									Players.Player owner = checkColony.ColonyGroup.Owners.GetAt(k);
-									if (PermissionsManager.HasPermission(causedBy, PERMISSION_BANNER_PREFIX + owner.ID.SteamID.m_SteamID)) {
-										return;
-									}
-								}
+							// owners and players trusted on this claim ("Manage Permission", /trust, /antigrief banner)
+							// may build here and place a banner close to it - where banner areas overlap, every
+							// colony in range has to allow it, so the loop goes on
+							if (checkColony.ColonyGroup.Owners.IndexOf(causedBy) >= 0 || TrustManager.IsTrusted(causedBy, checkColony)) {
+								continue;
 							}
 
 							if (isBannerBlock) {
@@ -230,13 +226,9 @@ namespace ColonyCommands {
 								int tooCloseZ = (int)System.Math.Abs(checkRange - distanceZ) + 1;
 								int distance = tooCloseX < tooCloseZ ? tooCloseX : tooCloseZ;
 								string direction = tooCloseX < tooCloseZ ? "east/west" : "north/south";
-								if (causedBy.ConnectionState == Players.EConnectionState.Connected) {
-									Chat.Send(causedBy, $"<color=red>Too close near {checkColony.Name}! Please move {distance} more blocks {direction}.</color>");
-								}
+								Deny(causedBy, originColony, playerPos, $"<color=red>Too close near {TextHelper.SafeName(checkColony.Name)}! Please move {distance} more blocks {direction}.</color>", $"too close to the banner of '{TextHelper.SafeName(checkColony.Name)}'");
 							} else {
-								if (causedBy.ConnectionState == Players.EConnectionState.Connected) {
-									Chat.Send(causedBy, "<color=red>No permission to change blocks near this banner!</color>");
-								}
+								Deny(causedBy, originColony, playerPos, "<color=red>No permission to change blocks near this banner!</color>", $"banner area of '{TextHelper.SafeName(checkColony.Name)}'");
 							}
 							BlockCallback(userData);
 							return;
@@ -248,6 +240,19 @@ namespace ColonyCommands {
 			return;
 		}
 
+
+		// Tells about a blocked change: the player in chat, or - if colonists/job blocks caused it -
+		// once per session through the game's notification list (no chat spam per block).
+		static void Deny(Players.Player causedBy, Colony originColony, Pipliz.Vector3Int position, string chatMessage, string what)
+		{
+			if (originColony != null) {
+				ProtectionNotices.Report(originColony, position, what);
+				return;
+			}
+			if (causedBy != null && causedBy.ConnectionState == Players.EConnectionState.Connected) {
+				BccChat.Send(causedBy, chatMessage);
+			}
+		}
 
 		// Deny a TryChangeBlock event
 		static void BlockCallback(ModLoader.OnTryChangeBlockData userData)
@@ -351,7 +356,7 @@ namespace ColonyCommands {
 					SignTracker.SignSender.Sender.ForceSend(position, sign);
 				}
 				if (player.ConnectionState == Players.EConnectionState.Connected) {
-					Chat.Send(player, "<color=red>You don't have permission to edit signs in this protected area!</color>");
+					BccChat.Send(player, "<color=red>You don't have permission to edit signs in this protected area!</color>");
 				}
 			});
 		}
@@ -373,6 +378,21 @@ namespace ColonyCommands {
 			}
 
 			return false;
+		}
+
+
+		static CommandInterceptor interceptor;
+
+		// The interceptor must be the very first registered chat command (it enforces assigned
+		// "open by default" permissions and captures window output before any command runs).
+		public static void EnsureCommandInterceptorFirst()
+		{
+			if (interceptor == null) {
+				interceptor = new CommandInterceptor();
+			}
+			List<IChatCommand> list = CommandManager.RegisteredCommands;
+			list.Remove(interceptor);
+			list.Insert(0, interceptor);
 		}
 
 
@@ -488,6 +508,7 @@ namespace ColonyCommands {
 				kills = 0;
 			}
 			KillCounter[killer] = ++kills;
+			ModerationLog.Add(killer, "Colonist killed", null, $"killed a colonist of '{TextHelper.StripRichText(npc.Colony?.Name ?? "?")}' at {npc.Position} (kill {kills} this session)");
 			Log.Write($"AntiGrief: NPC kill counted for {killer.Name}, total kills={kills} (jail>={config.NpcKillsJailThreshold}, kick>={config.NpcKillsKickThreshold}, ban>={config.NpcKillsBanThreshold}, validJail={JailManager.validJail})");
 
 			// ban
@@ -529,7 +550,7 @@ namespace ColonyCommands {
 			if (config.NpcKillsKickThreshold > 0) {
 				msg += $", remaining until kick: {remainingKick}";
 			}
-			Chat.Send(killer, msg);
+			BccChat.Send(killer, msg);
 		}
 
 		static bool IsKilled(NPC.NPCBase npc, ModLoader.OnHitData data)
@@ -602,7 +623,7 @@ namespace ColonyCommands {
 					}
 				}
 				if (target.ConnectionState == Players.EConnectionState.Connected) {
-					Chat.Send(target, $"<color=red>Colonists are dying, limit is {effectiveLimit}</color>");
+					BccChat.Send(target, $"<color=red>Colonists are dying, limit is {effectiveLimit}</color>");
 				}
 			}
 
@@ -676,10 +697,10 @@ namespace ColonyCommands {
 				}
 				int warnCount = ColonyColonistLimitTiers[colony];
 				if (warnCount < ColonyColonistLimitTierWarnTimes && owner.ConnectionState == Players.EConnectionState.Connected) {
-					Chat.Send(owner, $"<color=yellow>{colony.Name} is above the colonist limit ({effectiveLimit}) for your difficulty setting. Please increase zombie spawn level!</color>");
+					BccChat.Send(owner, $"<color=yellow>{TextHelper.SafeName(colony.Name)} is above the colonist limit ({effectiveLimit}) for your difficulty setting. Please increase zombie spawn level!</color>");
 					ColonyColonistLimitTiers[colony] += 1; // inc warning count
 				} else {
-					Chat.Send(owner, $"<color=red>{colony.Name} is still above the colonist limit ({effectiveLimit}) for your difficulty setting. Killing colonists.</color>");
+					BccChat.Send(owner, $"<color=red>{TextHelper.SafeName(colony.Name)} is still above the colonist limit ({effectiveLimit}) for your difficulty setting. Killing colonists.</color>");
 					int killed = 0;
 					List<NPCBase> cachedFollowers = new List<NPCBase>(colony.Followers);
 					int j = cachedFollowers.Count - 1;
@@ -741,6 +762,11 @@ namespace ColonyCommands {
 		// enable hooks into other mods (AngryGuards and Imperium, for now)
 		public static void AfterModsLoaded(List<ModLoader.ModDescription> mods)
 		{
+			CommandRegistry.SetLoadedMods(mods);
+			PytoniaEconomyBridge.Detect(mods);
+			PytoniaBridge.Detect(mods);
+			TraderBridge.Detect(mods);
+			ModInfoCollector.Collect(mods);
 			Assembly angryguards = null, imperium = null;
 			for (int i = 0; i < mods.Count; i++) {
 				if (mods[i].name == "Angry Guards") {
@@ -799,7 +825,7 @@ namespace ColonyCommands {
 			if (PermissionsManager.HasPermission(player, "antigrief.graceperiod")) {
 				return;
 			}
-			Chat.Send(player, $"Server not yet ready. Please try again in {config.StartupGracePeriod/60} minutes");
+			BccChat.Send(player, $"Server not yet ready. Please try again in {config.StartupGracePeriod/60} minutes");
 			Players.Disconnect(player);
 		}
 
@@ -814,7 +840,9 @@ namespace ColonyCommands {
 				return;
 			}
 
-			Chat.Send(player, "<color=yellow>Anti-Grief protection enabled</color>");
+			if (config.ShowJoinChatMessage) {
+				BccChat.Send(player, "<color=yellow>Anti-Grief protection enabled</color>");
+			}
 
 			if (config != null && config.ShowJoinPopup) {
 				SendJoinProtectionPopup(player);

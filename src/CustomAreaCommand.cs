@@ -16,7 +16,7 @@ namespace ColonyCommands
 			int shortestDistance = int.MaxValue;
 			foreach (CustomProtectionArea area in AntiGrief.config.CustomAreas) {
 				if (area.Contains(causedBy.PositionVoxelStanding)) {
-					Chat.Send(causedBy, $"You are inside a custom area: from {area.StartX}, {area.StartZ} to {area.EndX}, {area.EndZ}");
+					BccChat.Send(causedBy, $"You are inside a custom area: from {area.StartX}, {area.StartZ} to {area.EndX}, {area.EndZ}");
 					return true;
 				}
 				int distance = area.DistanceToCenter(causedBy.PositionVoxelStanding);
@@ -27,9 +27,9 @@ namespace ColonyCommands
 			}
 
 			if (closestArea != null) {
-				Chat.Send(causedBy, $"The closest area is at: {closestArea.StartX}, {closestArea.StartZ} to {closestArea.EndX}, {closestArea.EndZ}. {shortestDistance} blocks away");
+				BccChat.Send(causedBy, $"The closest area is at: {closestArea.StartX}, {closestArea.StartZ} to {closestArea.EndX}, {closestArea.EndZ}. {shortestDistance} blocks away");
 			} else {
-				Chat.Send(causedBy, "No areas found - try /bannername?");
+				BccChat.Send(causedBy, "No areas found - try /bannername?");
 			}
 
 			return true;

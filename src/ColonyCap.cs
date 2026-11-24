@@ -21,9 +21,9 @@ namespace ColonyCommands
 			// allow view option for all
 			if (splits.Count < 2) {
 				if (AntiGrief.config.ColonistLimit > 0) {
-					Chat.Send(causedBy, $"Current colonist limit is {AntiGrief.config.ColonistLimit}");
+					BccChat.Send(causedBy, $"Current colonist limit is {AntiGrief.config.ColonistLimit}");
 				} else {
-					Chat.Send(causedBy, $"Number of colonists is currently unlimited");
+					BccChat.Send(causedBy, $"Number of colonists is currently unlimited");
 				}
 				return true;
 			}
@@ -35,7 +35,7 @@ namespace ColonyCommands
 
 			int limit;
 			if (!int.TryParse(splits[1], out limit)) {
-				Chat.Send (causedBy, "Could not parse limit");
+				BccChat.Send(causedBy, "Could not parse limit");
 				return true;
 			}
 
@@ -49,11 +49,11 @@ namespace ColonyCommands
 			int interval;
 			if (splits.Count > 2) {
 				if (!int.TryParse(splits[2], out interval)) {
-					Chat.Send(causedBy, "Could not parse interval");
+					BccChat.Send(causedBy, "Could not parse interval");
 					return true;
 				}
 				AntiGrief.config.ColonistLimitCheckSeconds = System.Math.Max(1, interval);
-				Chat.Send(causedBy, $"Check interval seconds set to {AntiGrief.config.ColonistLimitCheckSeconds}");
+				BccChat.Send(causedBy, $"Check interval seconds set to {AntiGrief.config.ColonistLimitCheckSeconds}");
 			}
 
 			AntiGrief.Save();

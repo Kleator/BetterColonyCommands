@@ -14,7 +14,7 @@ namespace ColonyCommands
 
 			string error;
 			if (!TpaManager.TryDeny(causedBy, out error)) {
-				Chat.Send(causedBy, $"<color=red>{error}</color>");
+				BccChat.Send(causedBy, $"<color=red>{error}</color>");
 			}
 			return true;
 		}

@@ -31,27 +31,27 @@ namespace ColonyCommands
 
 			var m = Regex.Match(chattext, @"/beds (?<amount>\d+)");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /beds {number}");
+				BccChat.Send(causedBy, "Syntax: /beds {number}");
 				return true;
 			}
 			int amount = 0;
 			if (!int.TryParse(m.Groups["amount"].Value, out amount) || amount <= 0) {
-				Chat.Send(causedBy, "Number should be > 0");
+				BccChat.Send(causedBy, "Number should be > 0");
 				return true;
 			}
 
 			Colony colony = causedBy.ActiveColony;
 			if (colony == null) {
-				Chat.Send(causedBy, "You need to be at an active colony to spawn beds");
+				BccChat.Send(causedBy, "You need to be at an active colony to spawn beds");
 				return true;
 			}
 			BannerTracker.Banner banner = colony.GetClosestBanner(causedBy.PositionVoxelStanding);
 			if (banner == null) {
-				Chat.Send(causedBy, "No banners found for the active colony");
+				BccChat.Send(causedBy, "No banners found for the active colony");
 				return true;
 			}
 
-			Chat.Send(causedBy, $"Placing {amount} beds around you");
+			BccChat.Send(causedBy, $"Placing {amount} beds around you");
 			int radius = 3;
 			Vector3Int pos = banner.Position.Add(-radius + 1, 0, -radius);
 			int counterX = -radius + 1, counterZ = -radius;

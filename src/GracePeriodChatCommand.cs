@@ -22,7 +22,7 @@ namespace ColonyCommands
 				}
 				int minutes = 0;
 				if (!int.TryParse(splits[1], out minutes)) {
-					Chat.Send(causedBy, "Syntax: /graceperiod {minutes}");
+					BccChat.Send(causedBy, "Syntax: /graceperiod {minutes}");
 					return true;
 				}
 
@@ -39,7 +39,7 @@ namespace ColonyCommands
 				uptimeval = $"{upseconds} seconds.";
 			}
 
-			Chat.Send(causedBy, $"Startup grace period is {AntiGrief.config.StartupGracePeriod / 60} minutes. Server uptime is {uptimeval}");
+			BccChat.Send(causedBy, $"Startup grace period is {AntiGrief.config.StartupGracePeriod / 60} minutes. Server uptime is {uptimeval}");
 			return true;
 		}
 

@@ -2,6 +2,8 @@
 	"SpawnProtectionRange" : 200,
 	"BannerProtectionRange" : 100,
 	"ProtectionIncludesHeightCheck": true,
+	"ShowJoinPopup": true,
+	"ShowJoinChatMessage": true,
 	"ColonistLimit": 0,
 	"ColonistLimitCheckSeconds": 30,
 	"ColonistLimitMaxKillPerIteration": 500,

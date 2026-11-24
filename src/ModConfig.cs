@@ -6,6 +6,7 @@ namespace ColonyCommands {
 		public int SpawnProtectionRange = 200;
 		public int BannerProtectionRange = 100;
 		public bool ShowJoinPopup = true;
+		public bool ShowJoinChatMessage = true;
 		public bool ProtectionIncludesHeightCheck = true;
 		public int ColonistLimit = 0;
 		public int ColonistLimitCheckSeconds = 30;

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using ModLoaderInterfaces;
 using NetworkUI;
 using NPC;
@@ -23,8 +23,28 @@ namespace ColonyCommands {
 		IOnAutoSaveWorld,
 		IOnPlayerDisconnected,
 		IOnPlayerPushedNetworkUIButton,
-		IOnQuit
+		IOnQuit,
+		IOnUpdate,
+		IOnPlayerHit,
+		IOnConstructInventoryManageColonyUI
 	{
+		public void OnPlayerHit(Players.Player player, ModLoader.OnHitData hit)
+		{
+			RtpChatCommand.OnPlayerHit(player, hit);
+		}
+
+
+		// "Manage Permission" right of "Manage Owners" in the Colony tab - after the game built the tab
+		[ModLoader.ModCallback("bcc.trust.colonytab")]
+		[ModLoader.ModCallbackDependsOn("pipliz.buildbase")]
+		public void OnConstructInventoryManageColonyUI(Players.Player player, NetworkMenu menu, (NetworkUI.Items.Table left, NetworkUI.Items.Table right) tables)
+		{
+			try {
+				UiTrustPages.AddColonyTabButton(player, tables.left);
+			} catch (System.Exception e) {
+				Log.WriteException("Better Colony Commands: could not add the Manage Permission button", e);
+			}
+		}
 
 		public void AfterItemTypesDefined()
 		{
@@ -44,6 +64,34 @@ namespace ColonyCommands {
             BannedPlayerManager.Load();
 			ActivityTracker.Load();
 			ColonyNameGuard.Load();
+			BccSettingsManager.Load();
+			PermissionGroupsGuard.AfterWorldLoad();
+			ModerationLog.Load();
+			UiPreferences.Load();
+			CommandRegistry.EnsureBuiltins();
+			AntiGrief.EnsureCommandInterceptorFirst();
+			EconomyManager.AfterWorldLoad();
+			HomesManager.AfterWorldLoad();
+			RoleTestManager.AfterWorldLoad();
+			RoleIndex.CleanDuplicates();
+			RoleIndex.AfterWorldLoad();
+			EconomyHud.Initialize();
+			ModInfoCollector.RegisterImages();
+			UiManager.RegisterAssets();
+			SelfTest.AfterWorldLoad();
+			// other mods register their commands at various points of the startup - collect them once all are done
+			ThreadManager.InvokeOnMainThread(delegate {
+				AntiGrief.EnsureCommandInterceptorFirst();
+				CommandRegistry.ForceRefresh();
+				Log.Write($"Better Colony Commands: {CommandRegistry.All().Count} commands known ({CommandRegistry.All().FindAll(c => c.Mod != CommandRegistry.BCC_MOD).Count} from other mods)");
+			}, 10.0);
+		}
+
+		public void OnUpdate()
+		{
+			EconomyManager.OnUpdate();
+			RoleTestManager.OnUpdate();
+
 		}
 
 
@@ -74,6 +122,8 @@ namespace ColonyCommands {
 		public void OnPlayerPushedNetworkUIButton(ButtonPressCallbackData data)
 		{
 			AntiGrief.OnPlayerPushedNetworkUIButton(data);
+			UiManager.OnPlayerPushedNetworkUIButton(data);
+			WarningPopup.OnPlayerPushedNetworkUIButton(data);
 		}
 
 
@@ -89,6 +139,11 @@ namespace ColonyCommands {
 			AntiGrief.OnPlayerConnectedLate(player);
 			ActivityTracker.OnPlayerConnectedLate(player);
 			JailManager.OnPlayerConnectedLate(player);
+			EconomyManager.OnPlayerConnectedLate(player);
+			WarningPopup.OnPlayerConnectedLate(player);
+			RoleTestManager.OnPlayerConnectedLate(player);
+			RoleIndex.CleanDuplicates(player);
+			PermissionGroupsGuard.OnPlayerConnectedLate(player);
 		}
 
 
@@ -107,19 +162,26 @@ namespace ColonyCommands {
 		public void OnAutoSaveWorld()
 		{
 			ActivityTracker.OnAutoSaveWorld();
+			PermissionGroupsGuard.OnAutoSave();
+			EconomyManager.OnAutoSaveOrQuit();
 		}
 
 
 		public void OnPlayerDisconnected(Players.Player player)
 		{
+			RoleTestManager.OnPlayerDisconnected(player);
 			ActivityTracker.OnPlayerDisconnected(player);
 			JailManager.OnPlayerDisconnected(player);
+			UiManager.OnPlayerDisconnected(player);
+			ProtectionNotices.OnPlayerDisconnected(player);
 		}
 
 
 		public void OnQuit()
 		{
+			RoleTestManager.OnQuit();
 			ActivityTracker.OnQuit();
+			EconomyManager.OnAutoSaveOrQuit();
 		}
 
 	}

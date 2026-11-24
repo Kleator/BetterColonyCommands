@@ -101,6 +101,7 @@ namespace ColonyCommands {
 				WarManager.DisableWar(target);
 			}
 			Log.Write($"{causedBy.Name} banned {target.Name}/{target.ID.SteamID} from roleplaying: {reason}");
+			ModerationLog.Add(target, "Roleplay ban", causedBy, $"{prettyPrintDuration(duration)}: {reason}");
 			Save();
 		}
 
@@ -113,6 +114,7 @@ namespace ColonyCommands {
 			}
 			BannedPlayers.Remove(target);
 			Save();
+			ModerationLog.Add(target, "Roleplay ban lifted", null, "", false);
 			return true;
 		}
 

@@ -23,7 +23,7 @@ namespace ColonyCommands
 				return false;
 			}
 			if (splits.Count < 2) {
-				Chat.Send(causedBy, "Syntax: /mtop {score|food|colonists|time|itemtypename}");
+				BccChat.Send(causedBy, "Syntax: /mtop {score|food|colonists|time|itemtypename}");
 				return true;
 			}
 			string typename = splits[1];
@@ -65,7 +65,7 @@ namespace ColonyCommands
 				scoreType = EScoreType.Item;
 				ushort itemId;
 				if (!ItemTypes.IndexLookup.TryGetIndex(typename, out itemId)) {
-					Chat.Send(causedBy, $"There is no item called {typename}");
+					BccChat.Send(causedBy, $"There is no item called {typename}");
 					return true;
 				}
 				results = ScoreColonies(players, EScoreType.Item, itemId);
@@ -82,7 +82,7 @@ namespace ColonyCommands
 				return kvp2.Value.CompareTo(kvp1.Value);
 			});
 
-			Chat.Send(causedBy, $"##### Top {typename} #####");
+			BccChat.Send(causedBy, $"##### Top {typename} #####");
 
 			bool causedByIncluded = false;
 			for (int i = 0; i < 10 && i < sortedResult.Count; i++) {
@@ -99,7 +99,7 @@ namespace ColonyCommands
 				if (scoreType == EScoreType.TimePlayed) {
 					display_val = $"{System.Math.Truncate(val / 3600f)}:{System.Math.Truncate(val % 3600f / 60f):00}:{val % 60f:00}";
 				}
-				Chat.Send(causedBy, $"{i + 1,2}: {display_val,10} {ChatColors.GetDisplayName(sortedResult[i].Key)}");
+				BccChat.Send(causedBy, $"{i + 1,2}: {display_val,10} {ChatColors.GetDisplayName(sortedResult[i].Key)}");
 			}
 
 			// output player entry
@@ -119,7 +119,7 @@ namespace ColonyCommands
 					if (scoreType == EScoreType.TimePlayed) {
 						display_val = $"{System.Math.Truncate(val / 3600f)}:{System.Math.Truncate(val % 3600f / 60f):00}:{val % 60f:00}";
 					}
-					Chat.Send(causedBy, $".....\n{i + 1,2}: {display_val,10} {ChatColors.GetDisplayName(sortedResult[i].Key)}");
+					BccChat.Send(causedBy, $".....\n{i + 1,2}: {display_val,10} {ChatColors.GetDisplayName(sortedResult[i].Key)}");
 					}
 			}
 

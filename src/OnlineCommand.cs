@@ -30,7 +30,7 @@ namespace ColonyCommands
 			}
 			msg += $"\nTotal {Players.ConnectedPlayers.Count} players online";
 
-			Chat.Send (causedBy, msg);
+			BccChat.Send(causedBy, msg);
 			return true;
 		}
 	}

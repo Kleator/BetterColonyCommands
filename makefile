@@ -3,13 +3,13 @@ modname = ColonyCommands
 zipname = $(modname)-$(version).zip
 dllname = $(modname).dll
 version = $(shell cat modInfo.json | awk '/"version"/ {print $$3}' | head -1 | sed 's/[",]//g')
-zip_files_extra = announcements.example.json antigrief-config.example.json chatcolors.example.json blacklistedwords.example.json modInfo.json LICENSE README.md preview.png
+zip_files_extra = announcements.example.json antigrief-config.example.json chatcolors.example.json blacklistedwords.example.json modInfo.json LICENSE README.md preview.png ui-logo.png CHANGELOG.md
 build_dir = BetterColonyCommands
 gamedir ?= /local/games/Steam/steamapps/common/Colony\ Survival
 libdir = $(gamedir)/colonyserver_Data/Managed
 
-$(dllname): src/*.cs
-	mcs /target:library -nostdlib -r:$(libdir)/Assembly-CSharp.dll,$(libdir)/UnityEngine.CoreModule.dll,$(libdir)/UnityEngine.TextRenderingModule.dll,$(libdir)/Unity.Mathematics.dll,$(libdir)/mscorlib.dll,$(libdir)/System.dll,$(libdir)/System.Core.dll,$(libdir)/System.IO.Compression.dll,$(libdir)/System.IO.Compression.FileSystem.dll,$(libdir)/Newtonsoft.Json.dll,$(libdir)/netstandard.dll,$(libdir)/com.rlabrecque.steamworks.net.dll -out:"$(dllname)" src/*.cs
+$(dllname): $(shell find src -name "*.cs")
+	mcs /target:library -nostdlib -r:$(libdir)/Assembly-CSharp.dll,$(libdir)/UnityEngine.CoreModule.dll,$(libdir)/UnityEngine.TextRenderingModule.dll,$(libdir)/Unity.Mathematics.dll,$(libdir)/mscorlib.dll,$(libdir)/System.dll,$(libdir)/System.Core.dll,$(libdir)/System.IO.Compression.dll,$(libdir)/System.IO.Compression.FileSystem.dll,$(libdir)/Newtonsoft.Json.dll,$(libdir)/netstandard.dll,$(libdir)/com.rlabrecque.steamworks.net.dll -out:"$(dllname)" $(shell find src -name "*.cs")
 
 $(zipname): $(dllname) $(zip_files_extra)
 	$(RM) $(zipname)

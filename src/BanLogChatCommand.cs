@@ -21,14 +21,14 @@ namespace ColonyCommands
 			}
 
 			if (BannedPlayerManager.banLogs.Count == 0) {
-				Chat.Send(causedBy, "Banlog is empty");
+				BccChat.Send(causedBy, "Banlog is empty");
 			}
 
 			foreach (BanLogRecord record in BannedPlayerManager.banLogs) {
 				DateTime timestamp = new DateTime(record.timestamp * TimeSpan.TicksPerMillisecond * 1000);
 				Players.Player target = Players.PlayerDatabaseBySteamID[new CSteamID(record.target)];
 				Players.Player bannedBy = Players.PlayerDatabaseBySteamID[new CSteamID(record.causedBy)];
-				Chat.Send(causedBy, String.Format("{0} {1} banned by: {2} for {3} days: {4}", timestamp.ToString(), ChatColors.GetDisplayName(target), ChatColors.GetDisplayName(bannedBy), record.duration, record.reason));
+				BccChat.Send(causedBy, String.Format("{0} {1} banned by: {2} for {3} days: {4}", timestamp.ToString(), ChatColors.GetDisplayName(target), ChatColors.GetDisplayName(bannedBy), record.duration, record.reason));
 			}
 
 			return true;

@@ -21,7 +21,7 @@ namespace ColonyCommands
 			}
 			var m = Regex.Match(chattext, @"/warpplace (?<px>-?\d+) (?<py>-?\d+)( (?<pz>-?\d+))?");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /warpplace [x] [y] [z] or /warpplace [x] [z]");
+				BccChat.Send(causedBy, "Syntax: /warpplace [x] [y] [z] or /warpplace [x] [z]");
 				return true;
 			}
 			float vx, vy, vz;
@@ -29,16 +29,16 @@ namespace ColonyCommands
 			var yCoord = m.Groups["py"].Value;
 			var zCoord = m.Groups ["pz"].Value;
 			if (!float.TryParse(xCoord, out vx)) {
-				Chat.Send(causedBy, $"Failure parsing first coordinate '{xCoord}'");
+				BccChat.Send(causedBy, $"Failure parsing first coordinate '{xCoord}'");
 				return true;
 			}
 			if (!float.TryParse(yCoord, out vy)) {
-				Chat.Send (causedBy, $"Failure parsing second coordinate '{yCoord}'");
+				BccChat.Send(causedBy, $"Failure parsing second coordinate '{yCoord}'");
 				return true;
 			}
 			if (zCoord.Length > 0) {
 				if (!float.TryParse(zCoord, out vz)) {
-					Chat.Send (causedBy, $"Failure parsing third coordinate '{zCoord}'");
+					BccChat.Send(causedBy, $"Failure parsing third coordinate '{zCoord}'");
 					return true;
 				}
 			} else {

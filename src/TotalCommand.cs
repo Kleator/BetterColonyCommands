@@ -15,14 +15,14 @@ namespace ColonyCommands
 				return false;
 			}
 			if (splits.Count < 2) {
-				Chat.Send(causedBy, "Syntax: /total {itemname}");
+				BccChat.Send(causedBy, "Syntax: /total {itemname}");
 				return true;
 			}
 
 			string typename = splits[1];
 			ushort itemId;
 			if (!ItemTypes.IndexLookup.TryGetIndex(typename, out itemId)) {
-				Chat.Send(causedBy, $"There is no item called {typename}");
+				BccChat.Send(causedBy, $"There is no item called {typename}");
 				return true;
 			}
 
@@ -49,7 +49,7 @@ namespace ColonyCommands
 			} else {
 				display_value = string.Format("{0:N0}", amount);
 			}
-			Chat.Send(causedBy, $"Total amount of {typename}: {display_value}");
+			BccChat.Send(causedBy, $"Total amount of {typename}: {display_value}");
 
 			return true;
 		}

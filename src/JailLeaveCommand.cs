@@ -20,7 +20,7 @@ namespace ColonyCommands
       if (JailManager.visitorPreviousPos.TryGetValue(causedBy, out oldPos)) {
         Helper.TeleportPlayer(causedBy, oldPos);
       } else {
-        Chat.Send(causedBy, "Found no old position record, looks like you have to walk");
+        BccChat.Send(causedBy, "Found no old position record, looks like you have to walk");
       }
 
       return true;

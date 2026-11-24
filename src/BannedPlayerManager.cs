@@ -20,38 +20,47 @@ namespace ColonyCommands {
 		// BanPlayer
 		public static void BanPlayer(Players.Player target, Players.Player causedBy, uint time, string reason)
 		{
-			BlackAndWhitelisting.AddBlackList(target.ID.SteamID.m_SteamID);
-			BlackAndWhitelisting.Reload();
-			Players.Disconnect(target);
-
-			for (int i = 0; i < target.ColonyGroups.Count; ++i) {
-				ColonyGroup colonyGroup = target.ColonyGroups.GetAt(i);
-				Pipliz.Log.Write($"Purging colony {colonyGroup.Name} from banned player {target.Name}");
-				if (colonyGroup.Owners.Count == 1) {
-					for (int j = colonyGroup.Colonies.Count - 1; j >= 0; ++j) {
-						Colony colony = colonyGroup.Colonies.GetAt(j);
-						ServerManager.ClientCommands.DeleteColonyAndBanner(null, colony, colony.Banners[0].Position);
-					}
-				} else {
-					colonyGroup.RemoveOwner(target);
-				}
-			}
-			Log.Write($"{causedBy.Name} banned {target.Name}/{target.ID.SteamID.m_SteamID} for {time} days: {reason}");
-
+			// record first, so a problem while removing colonies never leaves a ban without its record
 			long now = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond / 1000;
 			BanLogRecord record = new BanLogRecord(target, causedBy, now, time, reason);
 			banLogs.Add(record);
 			Save();
+			Log.Write($"{(causedBy == null ? "Server" : causedBy.Name)} banned {target.Name}/{target.ID.SteamID.m_SteamID} for {time} days: {reason}");
 
-			return;
+			BlackAndWhitelisting.AddBlackList(target.ID.SteamID.m_SteamID);
+			BlackAndWhitelisting.Reload();
+			Players.Disconnect(target);
+
+			// colonies the player owns alone are deleted, shared ones keep their other owners.
+			// Copy the list first - deleting a colony group changes target.ColonyGroups.
+			List<ColonyGroup> groups = new List<ColonyGroup>();
+			for (int i = 0; i < target.ColonyGroups.Count; ++i) {
+				groups.Add(target.ColonyGroups.GetAt(i));
+			}
+			Players.Player issuer = causedBy ?? target;
+			PurgeBannerCommand purge = new PurgeBannerCommand();
+			foreach (ColonyGroup colonyGroup in groups) {
+				try {
+					if (colonyGroup.Owners.Count == 1) {
+						Log.Write($"Purging colony {colonyGroup.Name} from banned player {target.Name}");
+						purge.PurgeColonyGroup(issuer, colonyGroup);
+					} else {
+						colonyGroup.RemoveOwner(target);
+					}
+				} catch (Exception e) {
+					Log.WriteException($"Could not remove colony group {colonyGroup.ColonyGroupID.Value} of banned player {target.Name}", e);
+				}
+			}
 		}
 
 		// UnbanPlayer
-		public static void UnbanPlayer(BanLogRecord bannedPlayer)
+		public static void UnbanPlayer(BanLogRecord bannedPlayer, Players.Player causedBy = null)
 		{
 			bannedPlayer.unbanned = true;
-			Players.Player target = Players.PlayerDatabaseBySteamID[new CSteamID(bannedPlayer.target)];
-			Log.Write($"Unbanning {target.Name} after {bannedPlayer.duration} days");
+			if (Players.PlayerDatabaseBySteamID.TryGetValue(new CSteamID(bannedPlayer.target), out Players.Player target)) {
+				Log.Write($"Unbanning {target.Name} after {bannedPlayer.duration} days");
+				ModerationLog.Add(target, "Unban", causedBy, causedBy == null ? "ban expired" : "lifted early", false);
+			}
 			BlackAndWhitelisting.RemoveBlackList(bannedPlayer.target);
 			Save();
 		}
@@ -139,7 +148,7 @@ namespace ColonyCommands {
 		public BanLogRecord(Players.Player p, Players.Player c, long t, uint d, string r, bool u = false)
 		{
 			this.target = p.ID.SteamID.m_SteamID;
-			this.causedBy = p.ID.SteamID.m_SteamID;
+			this.causedBy = (c != null && c.ID.HasSteamID) ? c.ID.SteamID.m_SteamID : 0;
 			this.timestamp = t;
 			this.duration = d;
 			this.reason = r;

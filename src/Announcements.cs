@@ -56,7 +56,7 @@ namespace ColonyCommands
 		public static void OnPlayerConnectedLate(Players.Player player)
 		{
 			if (config.welcomeMessage.Length > 0) {
-				Chat.Send(player, config.welcomeMessage);
+				BccChat.Send(player, config.welcomeMessage);
 			}
 		}
 
@@ -102,7 +102,7 @@ namespace ColonyCommands
 		}
 
 
-		static void Save()
+		public static void Save()
 		{
 			try {
 				Log.Write($"Saving {ConfigFilePath}");

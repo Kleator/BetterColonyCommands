@@ -22,7 +22,7 @@ namespace ColonyCommands
 
 			var m = Regex.Match(chattext, @"/rpban (?<player>[""'].+[""']|.+?) (?<time>[0-9]+)(?<unit>[a-zA-Z]) (?<reason>.+)$");
 			if (!m.Success) {
-				Chat.Send(causedBy, "Syntax: /rpban {player} {duration}[m|h|d] {reason}");
+				BccChat.Send(causedBy, "Syntax: /rpban {player} {duration}[m|h|d] {reason}");
 				return true;
 			}
 
@@ -30,14 +30,14 @@ namespace ColonyCommands
 			string error;
 			string targetName = m.Groups["player"].Value;
 			if (!PlayerHelper.TryGetPlayer(targetName, out target, out error, true)) {
-				Chat.Send(causedBy, $"Could not find player {targetName}: {error}");
+				BccChat.Send(causedBy, $"Could not find player {targetName}: {error}");
 				return true;
 			}
 
 			long duration = 0;
 			string timeval = m.Groups["time"].Value;
 			if (!long.TryParse(timeval, out duration)) {
-				Chat.Send(causedBy, $"No valid time value: {timeval}");
+				BccChat.Send(causedBy, $"No valid time value: {timeval}");
 				return true;
 			}
 			string timeunit = m.Groups["unit"].Value;
@@ -55,12 +55,12 @@ namespace ColonyCommands
 					duration *= 60 * 60 * 24;
 					break;
 				default:
-					Chat.Send(causedBy, $"Invalid unit {timeunit}: please use one of m/h/d for minutes/hours/days");
+					BccChat.Send(causedBy, $"Invalid unit {timeunit}: please use one of m/h/d for minutes/hours/days");
 					return true;
 			}
 
 			if (RoleplayManager.IsRoleplayBanned(target)) {
-				Chat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is already banned");
+				BccChat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is already banned");
 				return true;
 			}
 
@@ -69,9 +69,9 @@ namespace ColonyCommands
 
 			RoleplayManager.BanPlayer(causedBy, target, duration, reason);
 
-			Chat.Send(causedBy, $"<color=yellow>Banned {ChatColors.GetDisplayName(target)} from roleplay for {prettytime}: {reason}</color>");
+			BccChat.Send(causedBy, $"<color=yellow>Banned {ChatColors.GetDisplayName(target)} from roleplay for {prettytime}: {reason}</color>");
 			if (target.ConnectionState == Players.EConnectionState.Connected) {
-				Chat.Send(target, $"<color=yellow>{ChatColors.GetDisplayName(causedBy)} banned you from roleplay for {prettytime}: {reason}</color>");
+				BccChat.Send(target, $"<color=yellow>{ChatColors.GetDisplayName(causedBy)} banned you from roleplay for {prettytime}: {reason}</color>");
 			}
 			return true;
 		}
@@ -93,24 +93,24 @@ namespace ColonyCommands
 			}
 
 			if (splits.Count != 2) {
-				Chat.Send(causedBy, "Syntax: /rpunban {player}");
+				BccChat.Send(causedBy, "Syntax: /rpunban {player}");
 				return true;
 			}
 
 			Players.Player target;
 			string error;
 			if (!PlayerHelper.TryGetPlayer(splits[1], out target, out error, true)) {
-				Chat.Send(causedBy, $"Could not find player {splits[1]}: {error}");
+				BccChat.Send(causedBy, $"Could not find player {splits[1]}: {error}");
 				return true;
 			}
 
 			if (RoleplayManager.UnbanPlayer(target)) {
-				Chat.Send(causedBy, $"Unbanned {ChatColors.GetDisplayName(target)} from roleplaying");
+				BccChat.Send(causedBy, $"Unbanned {ChatColors.GetDisplayName(target)} from roleplaying");
 				if (target.ConnectionState == Players.EConnectionState.Connected) {
-					Chat.Send(target, $"{ChatColors.GetDisplayName(causedBy)} unbanned you from roleplaying. You can /rp on again");
+					BccChat.Send(target, $"{ChatColors.GetDisplayName(causedBy)} unbanned you from roleplaying. You can /rp on again");
 				}
 			} else {
-				Chat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is not banned from roleplaying");
+				BccChat.Send(causedBy, $"{ChatColors.GetDisplayName(target)} is not banned from roleplaying");
 			}
 			return true;
 		}

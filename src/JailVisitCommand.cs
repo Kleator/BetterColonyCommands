@@ -16,7 +16,7 @@ namespace ColonyCommands
 			return false;
 		}
       if (!JailManager.validVisitorPos) {
-        Chat.Send(causedBy, "Found no valid jail visitor position");
+        BccChat.Send(causedBy, "Found no valid jail visitor position");
         return true;
       }
 

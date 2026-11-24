@@ -31,7 +31,7 @@ namespace ColonyCommands
 				return false;
 			}
 			if (splits.Count < 2) {
-				Chat.Send(causedBy, "Syntax: /top [c|colony|p|player] {score|food|colonists|time|itemtypename}");
+				BccChat.Send(causedBy, "Syntax: /top [c|colony|p|player] {score|food|colonists|time|itemtypename}");
 				return true;
 			}
 			string typename = splits[1];
@@ -43,7 +43,7 @@ namespace ColonyCommands
 				} else if (splits[1].Equals("p") || splits[1].Equals("player")) {
 					calcType = ECalctype.Player;
 				} else {
-					Chat.Send(causedBy, "Syntax: /top [c|colony|p|player] {score|food|colonists|time|itemtypename}");
+					BccChat.Send(causedBy, "Syntax: /top [c|colony|p|player] {score|food|colonists|time|itemtypename}");
 					return true;
 				}
 				typename = splits[2];
@@ -84,7 +84,7 @@ namespace ColonyCommands
 				scoreType = EScoreType.Item;
 				ushort itemId;
 				if (!ItemTypes.IndexLookup.TryGetIndex(typename, out itemId)) {
-					Chat.Send(causedBy, $"There is no item called {typename}");
+					BccChat.Send(causedBy, $"There is no item called {typename}");
 					return true;
 				}
 				results = ScoreColonies(players, calcType, EScoreType.Item, itemId);
@@ -101,7 +101,7 @@ namespace ColonyCommands
 				return kvp2.Value.CompareTo(kvp1.Value);
 			});
 
-			Chat.Send(causedBy, $"##### Top {typename} #####");
+			BccChat.Send(causedBy, $"##### Top {typename} #####");
 			for (int i = 0; i < 10 && i < sortedResult.Count; i++) {
 				string display_val;
 				long val = sortedResult[i].Value;
@@ -113,7 +113,7 @@ namespace ColonyCommands
 				if (scoreType == EScoreType.TimePlayed) {
 					display_val = $"{System.Math.Truncate(val / 3600f)}:{System.Math.Truncate(val % 3600f / 60f):00}:{val % 60f:00}";
 				}
-				Chat.Send(causedBy, $"{i + 1,2}: {display_val,10} {sortedResult[i].Key}");
+				BccChat.Send(causedBy, $"{i + 1,2}: {display_val,10} {sortedResult[i].Key}");
 			}
 
 			return true;
@@ -144,7 +144,7 @@ namespace ColonyCommands
 			Dictionary<string, long> results = new Dictionary<string, long>();
 			if (calcType == ECalctype.Colony) {
 				foreach (ColonyGroup col in colonyresults.Keys) {
-					results[col.Name] = colonyresults[col];
+					results[TextHelper.SafeName(col.Name)] = colonyresults[col];
 				}
 			} else {
 				foreach (ColonyGroup col in colonyresults.Keys) {

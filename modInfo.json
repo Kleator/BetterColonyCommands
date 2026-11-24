@@ -1,17 +1,54 @@
 [
 {
 	"name" : "Better Colony Commands",
-	"description" : "anti-grief protection and admin commands",
-	"version" : "1.0.17",
+	"description" : "Anti-grief protection, admin and player commands, windows (UI) for all commands, economy and an API for other mods.",
+	"version" : "1.1.0",
+	"author" : "Kleator (originally Adrenalynn, Xell)",
+	"homepage" : "https://github.com/Kleator/BetterColonyCommands",
+	"previewimage" : "preview.png",
+	"longdescription" : [
+		"Anti-grief protection for spawn, banners and custom areas, jail, war, roleplay, announcements, chat colors, activity tracking, teleport and travel commands.",
+		"Since 1.1.0: every command in a window (/help), output windows with paging, admin configuration (/bcconfig), permission overview (/permissions), /modlist, /roletime, /roles, /rtp and an economy (/money, /pay, /baltop) that works together with Pytonia Automation and THE TRADER.",
+		"Other mods can register commands, permissions and use the economy through ColonyCommands.BccApi."
+	],
 	"dllpath" : "ColonyCommands.dll",
 	"isoptional" : true,
 	"enableddefault" : true,
 	"compatibleversions" : [
 		"0.15.1.0",
 		"0.15.1.1",
-		"0.18.0.0"
+		"0.18.0.0",
+		"0.18.0.10"
 	],
 	"patchnotes": [
+		{ "version": "1.1.0", "notes": [
+				"new: /help opens a command window (only commands you may use) with filter, paging, details and execute with parameter fields - permissions are re-checked on the server for every click",
+				"new: output of info commands (/top, /online, /roles, /roletime, ...) in windows with paging and a back button; players exclude commands with /bcui or /bcsettings, the server list Ui.ExcludedCommands always wins",
+				"new: /roletime, /roles, /rtp (random teleport with server-side range and cooldown), /modlist (preview image, version, description, detail page), /permissions (all permissions in the game, mod, who has them, unused ones - admins only), /bcconfig (admin configuration window)",
+				"new: economy module based on Pytonia Automation's (/money, /pay, /baltop, /exchange, /addmoney, /removemoney, /setmoney), mirrored and three-way merged with Pytonia Automation, THE TRADER coins converted into money if that mod is removed - no data loss",
+				"new: ColonyCommands.BccApi for other mods (commands with description/usage/parameters, permissions, economy, output windows); commands of other mods are discovered automatically and listed in /help; commands without permission get an auto-created one that is open to everyone until assigned",
+				"/warpbanner and every colony lookup ignore formatting and symbols (Highrise-City3 finds a fully formatted banner name)",
+				"roles shown with their chatcolors.json formatting everywhere; <size> removed from player-defined names in chat and UI",
+				"fixed antigrief-config.example.json key \"ShowJoinPopup \" (trailing space)",
+				"role management window: roles as tree with multi-level inheritance, create/rename/delete roles (renamed everywhere), formatting and permissions per role",
+				"home points (/sethome, /home, /homes, /delhome + window) are now part of Better Colony Commands with limits per role; homes, limits and home permissions of Pytonia Automation are imported",
+				"test a role for 2 minutes (button per role, /roletest): your roles come back automatically - also after a disconnect, a server stop or a crash",
+				"permission groups are backed up; if a game update resets permissiongroups.json, the last state is restored automatically",
+				"trust on claims: 'Manage Permission' next to 'Manage Owners' in the Colony tab and /trust - let friends build on one or all of your claims, Angry Guards friend toggle",
+				"role pages and player pages know every player's roles like the chat tag does (default role also when the game only copied it, roles through higher roles); no more duplicate roles",
+				"declared compatibility with Colony Survival 0.18.0.10 (built and tested against it)",
+				"/achievements: are Steam achievements still on for you and this world - admins switch them back on with /achievements enable {player|all}",
+				"commands of mods without a command list (e.g. MapMod's /map) are listed in /help too",
+				"new option ShowJoinChatMessage: switch off the 'Anti-Grief protection enabled' chat line for everyone",
+				"colonists/job blocks in protected areas: one game notification per session instead of chat spam",
+				"window title, margins and row colors fixed; /help and /modlist scroll on one page; mod list sorted by last update (or A-Z) with full version history",
+				"/warpbanner without name works for all your colonies again; /bannername shows last seen; role spacing; /baltop with roles",
+				"the game's own commands listed in /help with their real permissions; announcements window in /bcconfig",
+				"player moderation window (/players): all players by last online, ban/jail/mute status, incidents, money, roles, permissions, colonies, colony limit, homes, moderation history with notes",
+				"role pages list their players (add/remove); new defaults: window width 1000, chat format {name}{rolename:top}{rp}: {message}",
+				"fixed row buttons (role Edit/Remove, home Teleport/Delete); /rtp with ground correction and parachute; window executions logged with result; logo under the window title; paging only beyond 500 lines; clearer headings"
+			]
+		},
 		{ "version": "1.0.17", "notes": [
 				"fixed implausibly high /top time and /mtop time values (e.g. thousands of hours) for some players - a player is added to the game's connected-players list (picked up by the autosave/disconnect playtime tracking) before this mod's activity tracker resets their session start time, so a connection that dropped mid-load, or an autosave landing in that gap, could credit them with the entire time since their previous session as 'played'",
 				"now resets the session start time as early as possible (OnPlayerConnectedEarly), and any single tracked gap over 24 hours is discarded instead of added to playtime, as a safety net against stale timestamps"
