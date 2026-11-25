@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Pipliz;
@@ -78,7 +79,11 @@ namespace ColonyCommands
 		static readonly Regex PlaceholderPattern = new Regex(@"\{(?<kw>\w+)(?::\s*(?<arg>[^;{}]*?)\s*)?(?:;\s*string\s*:\s*""(?<str>[^""]*)"")?\}");
 
 
-		// groups (in chatcolors.json declaration order) that causedBy currently has the "betterchat.<key>" permission for
+		// groups that causedBy currently has the "betterchat.<key>" permission for, highest first:
+		//  - order of the role tree from the top (a role, then the roles it includes, strand by strand -
+		//    as in the role window), keys that aren't roles after them in chatcolors.json order
+		//  - a role that another of the player's matched roles includes (a base role like the default role
+		//    every time role inherits) goes behind all others: it is the top only if nothing is above it
 		public static List<string> GetMatchedGroupKeys(Players.Player causedBy)
 		{
 			List<string> matched = new List<string>();
@@ -87,11 +92,57 @@ namespace ColonyCommands
 					matched.Add(key);
 				}
 			}
-			return matched;
+			if (matched.Count < 2) {
+				return matched;
+			}
+			EnsureRank();
+			HashSet<string> included = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (string key in matched) {
+				if (rankBelow.TryGetValue(key, out HashSet<string> below)) {
+					included.UnionWith(below);
+				}
+			}
+			List<string> declared = new List<string>(Colors.Keys);
+			int Position(string key)
+			{
+				int i = rankOrder.FindIndex(r => string.Equals(r, key, StringComparison.OrdinalIgnoreCase));
+				return i >= 0 ? i : rankOrder.Count + declared.IndexOf(key);
+			}
+			return matched.OrderBy(k => included.Contains(k) ? 1 : 0).ThenBy(Position).ToList();
+		}
+
+		// role tree order and "roles below each role", rebuilt at most every few seconds (chat and player lists ask often)
+		static List<string> rankOrder = new List<string>();
+		static Dictionary<string, HashSet<string>> rankBelow = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+		static DateTime rankBuilt = DateTime.MinValue;
+
+		static void EnsureRank()
+		{
+			if ((DateTime.UtcNow - rankBuilt).TotalSeconds < 5) {
+				return;
+			}
+			rankBuilt = DateTime.UtcNow;
+			try {
+				List<string> order = RoleManager.Tree().Select(t => t.role).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+				Dictionary<string, HashSet<string>> below = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+				foreach (string role in order) {
+					below[role] = new HashSet<string>(RoleManager.Descendants(role), StringComparer.OrdinalIgnoreCase);
+				}
+				rankOrder = order;
+				rankBelow = below;
+			} catch (Exception e) {
+				Log.WriteWarning($"Better Colony Commands: role order for chat tags not available: {e.Message}");
+			}
+		}
+
+		// role tags change right away after a role edit
+		public static void InvalidateRank()
+		{
+			rankBuilt = DateTime.MinValue;
 		}
 
 
-		// colors Name/Text using the highest-priority (first declared) matched group, same as the historical break-on-first-match behavior
+		// colors Name/Text using the highest matched group (see GetMatchedGroupKeys)
 		public static void ApplyNameAndTextColor(string topKey, ref string name, ref string text)
 		{
 			if (topKey == null || !Colors.TryGetValue(topKey, out ChatColorSpecification spec)) {

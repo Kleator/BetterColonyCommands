@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1
+
+### Fixes
+- The role tag (`{rolename:top}` in the chat line and the tag next to player names in every window) shows the player's real highest role again. It used to pick the first matching group of `chatcolors.json`, so a base role that every time role inherits - like a default role at the bottom of the top strand - was shown for almost everyone. Now the role tree decides: tree order from the top, strand by strand as in the role window, and a role that another of the player's roles includes only counts if the player has nothing above it. Example: Explorer + Gatherer + Lumberjack + Farmer shows Farmer, Explorer + Scientist + Overseer shows Overseer, Mod + Farmer shows Mod. Role editor changes apply right away; `chatcolors.json` needs no change.
+
 ## 1.1.0
 
 Big feature update: windows (UI) for everything, an integration API for other mods, an economy module and new commands.

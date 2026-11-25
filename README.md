@@ -198,7 +198,7 @@ Placeholders available in **Format**:
 - `{name}` - the player's name, colored by their highest-priority matching group.
 - `{message}` - the chat text.
 - `{rp}` - the `[RP]` roleplay marker, when the player has `/rp on`.
-- `{rolename:top}` / `{rolename:bottom}` - the colored tag of the player's highest- or lowest-priority matching group (priority = declaration order in `Groups`), or nothing if none match. **`prefix` is used exactly as written, with no brackets added** - include your own, e.g. `"prefix": "[God]"` or `"prefix": "<b>[Owner]</b>"`, so nothing gets double-wrapped.
+- `{rolename:top}` / `{rolename:bottom}` - the colored tag of the player's highest- or lowest-priority matching group, or nothing if none match. Priority follows the role tree from the top, as in the role window (a role, then the roles it includes, strand by strand); a role that another of the player's roles includes - like a default role every time role inherits - only counts if the player has nothing above it. Example: Explorer + Gatherer + Lumberjack + Farmer shows Farmer; Explorer + Scientist + Overseer shows Overseer. Groups that aren't roles come last, in declaration order. **`prefix` is used exactly as written, with no brackets added** - include your own, e.g. `"prefix": "[God]"` or `"prefix": "<b>[Owner]</b>"`, so nothing gets double-wrapped.
 - `{rolename:<groupname>}` - that specific group's tag, only if the player currently matches it, else nothing.
 - `{role:<groupname>;string:"literal text"}` - outputs the given literal text only if the player currently matches `<groupname>`, else nothing. Useful for building a custom sentence around a role, e.g. `{role:god;string:"This user is Owner: "}{rolename:god}`.
 

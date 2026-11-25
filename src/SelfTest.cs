@@ -430,6 +430,16 @@ namespace ColonyCommands
 					}
 					break;
 				}
+				case "!tag": {
+					// !tag <player> - chat role tags in priority order and the name as shown everywhere
+					if (parts.Length < 2 || !PlayerHelper.TryGetPlayer(line.Substring(4).Trim(), out Players.Player tg, out string tgerr, true)) {
+						result.Add("player not found");
+						break;
+					}
+					List<string> keys = ChatColors.GetMatchedGroupKeys(tg);
+					result.Add($"{tg.Name}: top={(keys.Count > 0 ? keys[0] : "-")} shown as '{TextHelper.StripRichText(ChatColors.GetDisplayName(tg))}' order=[{string.Join(",", keys)}]");
+					break;
+				}
 				case "!cheat": {
 					// !cheat <player> - what a cheat command does: achievements off, cheats used, flight on
 					if (parts.Length < 2 || !PlayerHelper.TryGetPlayer(line.Substring(6).Trim(), out Players.Player cp2, out string cerr2, true)) {

@@ -134,6 +134,7 @@ namespace ColonyCommands
 			}
 			loadedAt = DateTime.UtcNow;
 			ReloadGamePermissions();
+			ChatColors.InvalidateRank();
 			PermissionGroupsGuard.AfterRoleEditorSave();
 		}
 

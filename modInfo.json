@@ -2,7 +2,7 @@
 {
 	"name" : "Better Colony Commands",
 	"description" : "Anti-grief protection, admin and player commands, windows (UI) for all commands, economy and an API for other mods.",
-	"version" : "1.1.0",
+	"version" : "1.1.1",
 	"author" : "Kleator (originally Adrenalynn, Xell)",
 	"homepage" : "https://github.com/Kleator/BetterColonyCommands",
 	"previewimage" : "preview.png",
@@ -21,6 +21,10 @@
 		"0.18.0.10"
 	],
 	"patchnotes": [
+		{ "version": "1.1.1", "notes": [
+				"fixed: the role tag ({rolename:top} and next to player names) shows the real highest role again - the role tree decides, a base role that every time role inherits (e.g. the default role) only shows if the player has nothing above it"
+			]
+		},
 		{ "version": "1.1.0", "notes": [
 				"new: /help opens a command window (only commands you may use) with filter, paging, details and execute with parameter fields - permissions are re-checked on the server for every click",
 				"new: output of info commands (/top, /online, /roles, /roletime, ...) in windows with paging and a back button; players exclude commands with /bcui or /bcsettings, the server list Ui.ExcludedCommands always wins",
