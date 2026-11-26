@@ -139,6 +139,10 @@ namespace ColonyCommands
 					case "announceedit": UiAnnouncementPages.BuildEdit(player, state, menu); break;
 					case "trust": UiTrustPages.BuildTrust(player, state, menu); break;
 					case "trustplayer": UiTrustPages.BuildPlayer(player, state, menu); break;
+					case "audio": UiAudioPages.BuildList(player, state, menu); break;
+					case "audiosrc": UiAudioPages.BuildSource(player, state, menu); break;
+					case "audiotrack": UiAudioPages.BuildTrack(player, state, menu); break;
+					case "audiodelete": UiAudioPages.BuildDeleteConfirm(player, state, menu); break;
 					default: UiPages.BuildOutput(player, state, menu); break;
 				}
 			} catch (Exception e) {
@@ -290,7 +294,9 @@ namespace ColonyCommands
 		static readonly Dictionary<string, string> ListAliases = new Dictionary<string, string> {
 			{ "edit", "roles" }, { "test", "roles" }, { "rmchild", "children" }, { "rmparent", "parents" }, { "rmperm", "perms" },
 			{ "pick", "pick" }, { "tp", "homes" }, { "del", "homes" },
-			{ "toggle", "msgs" }, { "editmsg", "msgs" }, { "up", "msgs" }, { "down", "msgs" }, { "sendnow", "msgs" }, { "delmsg", "msgs" }
+			{ "toggle", "msgs" }, { "editmsg", "msgs" }, { "up", "msgs" }, { "down", "msgs" }, { "sendnow", "msgs" }, { "delmsg", "msgs" },
+			{ "srctoggle", "srcs" }, { "srcedit", "srcs" }, { "srcplay", "srcs" }, { "srcstop", "srcs" }, { "srcgoto", "srcs" }, { "srcdel", "srcs" },
+			{ "trkedit", "tracks" }, { "trkadd", "tracks" }
 		};
 
 		static void PageAction(Players.Player player, PageState state, string arg, JObject storage)
@@ -340,6 +346,12 @@ namespace ColonyCommands
 				case "colonydelete":
 					UiPlayerPages.Action(player, state, arg, item, storage);
 					break;
+				case "audio":
+				case "audiosrc":
+				case "audiotrack":
+				case "audiodelete":
+					UiAudioPages.Action(player, state, arg, item, storage);
+					break;
 			}
 		}
 
@@ -357,6 +369,9 @@ namespace ColonyCommands
 					break;
 				case "players":
 					if (UiPlayerPages.CanOpen(player)) Open(player, new PageState { Kind = "players" }, newHistory);
+					break;
+				case "audio":
+					if (UiAudioPages.CanEdit(player)) Open(player, new PageState { Kind = "audio" }, newHistory);
 					break;
 				case "help": Open(player, new PageState { Kind = "help" }, newHistory); break;
 				case "mods": Open(player, new PageState { Kind = "mods" }, newHistory); break;

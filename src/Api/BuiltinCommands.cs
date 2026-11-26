@@ -182,6 +182,8 @@ namespace ColonyCommands
 			Add("/players", MOD, "Opens player moderation: every player (last online first) with ban/jail/mute status and incidents; edit money, roles, permissions, colonies, homes, online time and see the moderation history.", "/players [search]", UiPlayerPages.PERMISSION,
 				new[] { Arg("search", "Player name or SteamID", true) });
 			Add("/bcconfig", ADMIN, "Opens the admin configuration window for all Better Colony Commands settings.", "/bcconfig", BccPermissions.PERMISSION_CONFIG);
+			Add("/audio", ADMIN, "Audio sources: place music or sounds (Ogg Vorbis files in the world's bcc-audio folder) in the world - range, volume, loop with crossfade, fades, triggers (in range, enter, click, join, interval, daybreak, nightfall, time of day, manual), channels. Opens the audio window; '/audio show' shows the sources as markers.", AudioChatCommand.USAGE, BccAudio.PERMISSION,
+				new[] { Arg("action", "list, tracks, add, remove, move, tp, play, stop, on, off, set, info, show, near, edit", true), Arg("arguments", "e.g. add lobby spawn-music", true) });
 			Add("/bcreload", ADMIN, "Reloads this mod's config files from disk.", "/bcreload", P + "bcreload");
 			Add("/announcements", ADMIN, "Manages scheduled, rotating chat announcements.", "/announcements {add|remove|edit|move|enable|disable|interval} ...", P + "announcements.list",
 				new[] { Arg("arguments", "e.g. add Welcome!", true) });

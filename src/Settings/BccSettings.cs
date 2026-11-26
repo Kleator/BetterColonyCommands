@@ -17,6 +17,40 @@ namespace ColonyCommands
 		public ModListSettings ModList = new ModListSettings();
 		public HomesSettings Homes = new HomesSettings();
 		public PermissionBackupSettings Permissions = new PermissionBackupSettings();
+		public AudioSettings Audio = new AudioSettings();
+
+		public class AudioSettings
+		{
+			[Description("Enables audio sources (/audio): Ogg Vorbis files from the world's bcc-audio folder, placed in the world by admins. Changing this needs a server restart.")]
+			public bool Enabled = true;
+
+			[Description("Audible distances (blocks) prepared for every track at server start. The exact range of every positional source is added automatically at start; a range changed while the server runs uses the nearest step until the next restart. More steps = larger audio table for joining players. Needs a restart.")]
+			public List<int> RangeSteps = new List<int> { 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024 };
+
+			// default of 1.2.0 test builds (stopped at 192) - upgraded automatically
+			public static readonly int[] OldDefaultRangeSteps = { 8, 12, 16, 24, 32, 48, 64, 96, 128, 192 };
+
+			[Description("Size of one volume step in dB (fades and volumes are made of these steps). Smaller = finer, but more variants. Needs a restart.")]
+			public float VolumeStepDb = 2.5f;
+
+			[Description("Quietest volume step in dB below full volume; anything quieter is silent. Needs a restart.")]
+			public float QuietestDb = -40f;
+
+			[Description("Seconds between two volume steps of a fade (fade in/out, loop crossfade, Area distance). Lower = smoother, but more short switches the players may hear as clicks.")]
+			public float FadeStepSeconds = 0.25f;
+
+			[Description("How often audio sources are updated, in milliseconds.")]
+			public int UpdateMilliseconds = 200;
+
+			[Description("Distance (blocks) within which admins who switched markers on (/audio show) see the audio sources.")]
+			public int MarkerDistance = 96;
+
+			[Description("Markers also show the audible range as a ring of small notes.")]
+			public bool MarkerRings = true;
+
+			[Description("The /audio window warns when all audio files together are larger than this (MB) - every player downloads them once when joining.")]
+			public int WarnTotalMegabytes = 30;
+		}
 
 		public class PermissionBackupSettings
 		{
@@ -190,6 +224,15 @@ namespace ColonyCommands
 			if (s.Ui.WindowCommands == null) s.Ui.WindowCommands = new List<string>();
 			if (s.ModList.HiddenMods == null) s.ModList.HiddenMods = new List<string>();
 			if (s.Homes.RoleLimits == null) s.Homes.RoleLimits = new Dictionary<string, int>();
+			if (s.Audio == null) s.Audio = new BccSettings.AudioSettings();
+			if (s.Audio.RangeSteps == null || s.Audio.RangeSteps.Count == 0 || System.Linq.Enumerable.SequenceEqual(s.Audio.RangeSteps, BccSettings.AudioSettings.OldDefaultRangeSteps)) {
+				s.Audio.RangeSteps = new BccSettings.AudioSettings().RangeSteps;
+			}
+			s.Audio.VolumeStepDb = System.Math.Max(0.5f, System.Math.Min(6f, s.Audio.VolumeStepDb));
+			s.Audio.QuietestDb = -System.Math.Max(10f, System.Math.Min(60f, System.Math.Abs(s.Audio.QuietestDb)));
+			s.Audio.FadeStepSeconds = System.Math.Max(0.05f, System.Math.Min(5f, s.Audio.FadeStepSeconds));
+			s.Audio.UpdateMilliseconds = System.Math.Max(50, System.Math.Min(2000, s.Audio.UpdateMilliseconds));
+			s.Audio.MarkerDistance = System.Math.Max(8, System.Math.Min(512, s.Audio.MarkerDistance));
 			s.Ui.MaxLinesPerPage = System.Math.Max(50, System.Math.Min(2000, s.Ui.MaxLinesPerPage));
 			s.Ui.WindowWidth = System.Math.Max(400, System.Math.Min(1600, s.Ui.WindowWidth));
 			s.Ui.WindowHeight = System.Math.Max(300, System.Math.Min(1000, s.Ui.WindowHeight));

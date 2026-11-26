@@ -30,11 +30,12 @@ namespace ColonyCommands
 			JailManager.ReloadConfig();
 			BccSettingsManager.Load();
 			UiPreferences.Load();
+			BccAudio.Reload();
 			if (File.Exists(Path.Combine("gamedata", "savegames", ServerManager.WorldName, "announcements.json"))) {
 				Announcements.Load();
 			}
 
-			BccChat.Send(causedBy, "<color=yellow>BetterColonyCommands: config reloaded (antigrief-config.json, chatcolors.json, travelpaths.json, blacklistedwords.json, jail-config.json, announcements.json, bcc-settings.json, bcc-playersettings.json)</color>");
+			BccChat.Send(causedBy, "<color=yellow>BetterColonyCommands: config reloaded (antigrief-config.json, chatcolors.json, travelpaths.json, blacklistedwords.json, jail-config.json, announcements.json, bcc-settings.json, bcc-playersettings.json, bcc-audio.json)</color>");
 			Log.Write($"{causedBy.Name} reloaded BetterColonyCommands configuration via /bcreload");
 			return true;
 		}

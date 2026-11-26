@@ -1,6 +1,6 @@
 # Better Colony Commands
 
-Server-side Colony Survival mod with anti-grief protection, moderation commands, admin utilities, jail and war systems, announcements, chat colors, activity tracking, trade, warp, travel and cleanup commands.
+Server-side Colony Survival mod with anti-grief protection (with trust on claims), roles and permissions, player moderation, jail and war systems, announcements, chat colors, activity tracking, an economy, home points, teleports and travel, music and sounds placed in the world (audio sources) - and a complete server management in windows (UI).
 
 This is a maintained continuation of Colony Commands, originally by Adrenalynn and continued by Xell, rebuilt and cleaned for current Colony Survival releases. Maintained by Kleator since version 1.0.7.
 
@@ -274,6 +274,37 @@ Next to **Manage Owners** in the game's Colony tab every owner gets a **Manage P
 
 `/sethome [name]`, `/home [name]`, `/homes` (opens the **My homes** window: teleport, set, delete), `/delhome [name]`. Limits per role in `bcc-settings.json` → `Homes` (`DefaultLimit`, `RoleLimits` - imported from Pytonia Automation's roles on first start, also editable on each role's page; `-1` = unlimited). Home points are part of Better Colony Commands (data in `bcc-homes.json`). Coming from **Pytonia Automation**: its homes are imported automatically at start (only ones Better Colony Commands doesn't know yet) and its role home limits once; Better Colony Commands' commands answer even if an older Pytonia Automation still has its own home module. Pytonia Automation's home permissions are migrated once per world: `pytonia.automation.home` → `bcc.cmd.home` + `bcc.cmd.homes`, `.sethome` → `bcc.cmd.sethome`, `.delhome` → `bcc.cmd.delhome` (for roles and for players with own permissions, also when granted through a parent like `pytonia.automation`); a Pytonia permission nobody had goes to the all-permission roles, so the commands stay as restricted as before.
 
+## Audio Sources - since 1.2.0
+
+Admins place music and sounds in the world - lobby music at the spawn, a bell in the village, ambience in a cave. Window **/audio** (also `/bcconfig` → *Audio sources*), permission `mods.scarabol.commands.audio`.
+
+**Tracks** are the Ogg Vorbis files (`*.ogg`, the game's audio format - convert mp3/wav e.g. with Audacity) in the world folder `gamedata/savegames/<world>/bcc-audio/`. Put files there and restart the server; every file becomes a track named after it. Other formats (mp3, wav, m4a, flac, ...) can't be played by the game - the window lists them with how to convert them (e.g. `ffmpeg -i song.wav -c:a libvorbis -q:a 5 song.ogg`; best source: WAV). Every player downloads all files once when joining (cached afterwards), so keep them small (mono, 96-128 kbit/s) - the window shows the total size. Per track: which volume slider of the players applies (*Ambient*, *Effects* or *Master*) and how it is loaded (tracks over 5 minutes are streamed from disk, shorter ones kept compressed in memory) - takes effect after a restart.
+
+**Sources** (`bcc-audio.json`) are placed at your position (`/audio add <track> [name]` or *Add here* in the window) and have these settings - all changeable at any time, live:
+
+| Setting | Meaning |
+|---|---|
+| Spatial | **Positional**: real 3D sound, louder the closer you are, smooth fade-out up to the range (done by the game client). **Area**: same volume everywhere inside the inner radius, fading out between inner radius and range, not directional - e.g. lobby music for the whole spawn. |
+| Range, Inner radius | Audible distance in blocks (up to 4096). Positional sources: the exact range of every source is prepared at server start; a range changed while the server runs uses the nearest prepared step (`Audio.RangeSteps`, default 8 ... 1024) until the next restart - the window says so. |
+| Volume | 1-100 % (in steps of `Audio.VolumeStepDb`, default 2.5 dB). The players' own volume sliders apply on top. |
+| Loop, Loop crossfade | Repeat the track. Crossfade = seconds the end overlaps (fades into) the start of the next round; 0 = seamless loop. |
+| Fade in / Fade out | Soft start when it starts for a player (or comes back after being blended out), soft end when it is stopped, its duration is over or its time condition ends. |
+| Synced | Looping *In range* sources: everyone hears the same moment of the track (like a radio); off = from the beginning for every player who comes into range. |
+| Trigger | **In range** (plays while a player is near), **Enter** (a player comes within the trigger radius), **Click** (right-click the block at or directly below the source - e.g. a jukebox block), **Join** (a player joins within the trigger radius), **Interval** (every N real minutes), **Daybreak**, **Nightfall**, **Time of day** (in-game hour), **Manual** (`/audio play`, the window, other mods). |
+| Who hears it | Enter / Click / Join: everyone in range, or only the player who triggered it. |
+| Duration, Cooldown | How long a triggered start plays (0 = once through the track, or until stopped / the time condition ends if it loops); minimum time between two triggered starts. |
+| Plays | Always, only during the day or only at night. |
+| Channel, Priority | Blending: sources with the same channel name never play at the same time for a player - only the highest priority (then the nearest) is heard, the others fade out and come back when it ends. With equal priority another source takes over only when it is clearly nearer (no switching back and forth between two). Empty channel = mixes freely with everything. |
+| Sync with | Follows another source's timeline: always the same point in the music and the same loop rounds; a triggered start joins there instead of starting from the beginning. Trigger, track, volume, range, fades and everything else stay the source's own. Use the same track or a version of the same length (e.g. a muffled indoor version) and put both into the same channel - the hand-over between them is then seamless. Renaming follows, deleting the other source frees it. |
+
+**Only players in range get anything.** A source at the spawn is only played for the players at the spawn; nobody else gets a single packet for it.
+
+**Markers:** `/audio show` (or *Markers* in the window) switches markers on/off for yourself (default off): a label above every source near you (name, settings, state) and its range as a ring of small notes.
+
+Commands: `/audio` (window, or list in chat), `/audio tracks`, `/audio add <track> [name]`, `/audio remove|move|tp|play|stop|on|off|info|edit <name>`, `/audio set <name> <setting> <value>` (any setting, e.g. `/audio set lobby Volume 60`, `/audio set lobby Trigger Nightfall`), `/audio show`, `/audio near`. Global settings: `bcc-settings.json` → `Audio` (also in `/bcconfig` → *Audio settings*): `Enabled`, `RangeSteps`, `VolumeStepDb`, `QuietestDb` (restart needed), `FadeStepSeconds`, `UpdateMilliseconds`, `MarkerDistance`, `MarkerRings`, `WarnTotalMegabytes`. Other mods: `BccApi.GetAudioSourceNames()`, `PlayAudioSource(name, player)`, `StopAudioSource(name)`, `SetAudioSourceEnabled(name, on)`.
+
+*How it works and its limits:* the game can't change the volume or range of a sound that is already playing, and it has no fade-in. So every track is registered at server start in all range and volume steps (one shared download per file), and Better Colony Commands switches between them at the same position in the track. Positional distance fading is perfectly smooth (done by the client). Fades, loop crossfades, Area distance fading and channel blending are made of short volume steps (`Audio.FadeStepSeconds`); with high volume differences these steps can be audible as small clicks - longer fades sound smoother. Stopping always ends with the game's own short fade.
+
 ## Protected Areas and Colonists - since 1.1.0
 
 If colonists or job blocks (not the player) try to change blocks in a protected area (spawn, custom areas, foreign banner areas, water placement), the change is blocked silently and the colony's owners get **one** notice per session in the game's notification list (with position and reason). Marking it read or deleting it acknowledges it; no more chat messages for every block.
@@ -324,7 +355,7 @@ api?.GetMethod("RegisterCommandEx")?.Invoke(null, new object[] {
 
 ## Self Test (server admins / developers)
 
-Put a file `bcc-selftest.txt` into the world folder (`gamedata/savegames/<world>/`). 20 seconds after the world loaded, Better Colony Commands runs internal checks, builds every window, executes each line of the file as a chat command of the server (output captured) and writes everything to `bcc-selftest-result.txt`; the request file is renamed to `bcc-selftest.done.txt`. Lines starting with `#` are comments. Test helpers: `!as <player> | <command>` (run as that player, also offline), `!ui <player> | <help|cmd /x|mods|mod <name>|perms|config|configsection <key>|settings>` (lists the window's elements and buttons), `!findcolony <name>`, `!ledger`, `!tradercoins`, `!addtradercoins <n>`, `!autosave`, `!quit`.
+Put a file `bcc-selftest.txt` into the world folder (`gamedata/savegames/<world>/`). 20 seconds after the world loaded, Better Colony Commands runs internal checks, builds every window, executes each line of the file as a chat command of the server (output captured) and writes everything to `bcc-selftest-result.txt`; the request file is renamed to `bcc-selftest.done.txt`. Lines starting with `#` are comments. Test helpers: `!as <player> | <command>` (run as that player, also offline), `!ui <player> | <help|cmd /x|mods|mod <name>|perms|config|configsection <key>|settings>` (lists the window's elements and buttons), `!findcolony <name>`, `!ledger`, `!tradercoins`, `!addtradercoins <n>`, `!autosave`, `!quit`, `!audio [status|fire <source>|stop <source>|sim <x> <y> <z> <seconds> [source to fire]]` (`sim`: an imaginary listener at that position, every audio packet it would get is listed and checked against the registered clips).
 Note: on a server started with network type LocalHost every player counts as RCON-authenticated and has all permissions - use a Steam network type to test permissions.
 
 ## All Commands
@@ -443,6 +474,7 @@ Note: on a server started with network type LocalHost every player counts as RCO
 |---|---|---|
 | `/permissions [filter\|page\|unused\|used\|open]` | `mods.scarabol.commands.permissions` | Every permission in the game, its mod, who has it, unused ones. |
 | `/bcconfig` | `mods.scarabol.commands.config` | Admin configuration window for all settings. |
+| `/audio [list\|tracks\|add\|remove\|move\|tp\|play\|stop\|on\|off\|set\|info\|show\|near\|edit] ...` | `mods.scarabol.commands.audio` | Audio sources: music and sounds placed in the world (window without arguments), markers with `/audio show`. |
 | `/roletest [role\|end]` | `mods.scarabol.commands.config` (`end`: everyone in a test) | Tests a role for 2 minutes, then your own roles come back (also after a disconnect, server stop or crash). |
 | `/addmoney`, `/removemoney`, `/setmoney {player} {amount}` | `mods.scarabol.commands.economy.admin` | Economy admin commands (answered by Pytonia Automation if installed). |
 | `/spawnnpc {number}` | `mods.scarabol.commands.npcandbeds` | Spawns colonists at no food cost and no beds required (admin/test use). |

@@ -135,6 +135,7 @@ namespace ColonyCommands {
 			CommandManager.RegisterCommand(new BcConfigChatCommand());
 			CommandManager.RegisterCommand(new HomesChatCommand());
 			CommandManager.RegisterCommand(new PlayersChatCommand());
+			CommandManager.RegisterCommand(new AudioChatCommand());
 			EnsureCommandInterceptorFirst();
 			TraderBridge.AfterItemTypesDefined();
 			return;

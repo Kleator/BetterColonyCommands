@@ -94,6 +94,7 @@ namespace ColonyCommands
 				new ConfigSection { Key = "roles", Title = "Roles, permissions & role formatting", File = "permissiongroups.json, chatcolors.json", OpensPage = "roles" },
 				new ConfigSection { Key = "announcements", Title = "Announcements", File = "announcements.json", OpensPage = "announce", Visible = UiAnnouncementPages.CanEdit },
 				new ConfigSection { Key = "players", Title = "Player moderation", File = "all players, roles, money, colonies, history", OpensPage = "players", Visible = UiPlayerPages.CanOpen },
+				new ConfigSection { Key = "audiosources", Title = "Audio sources (music, sounds in the world)", File = "bcc-audio.json, bcc-audio folder", OpensPage = "audio", Visible = UiAudioPages.CanEdit },
 				new ConfigSection { Key = "antigrief", Title = "Anti-Grief & server", File = "antigrief-config.json", Target = () => AntiGrief.config, Save = AntiGrief.Save, Help = AntiGriefHelp,
 					ReadOnlyHints = new Dictionary<string, string> {
 						{ "CustomAreas", "managed with /antigrief area and /customarea" },
@@ -104,6 +105,8 @@ namespace ColonyCommands
 				new ConfigSection { Key = "rtp", Title = "Random teleport (/rtp)", File = "bcc-settings.json", Target = () => BccSettingsManager.Settings.Rtp, Save = BccSettingsManager.AfterChange },
 				new ConfigSection { Key = "economy", Title = "Economy", File = "bcc-settings.json", Target = () => BccSettingsManager.Settings.Economy, Save = BccSettingsManager.AfterChange },
 				new ConfigSection { Key = "modlist", Title = "Mod list (/modlist)", File = "bcc-settings.json", Target = () => BccSettingsManager.Settings.ModList, Save = BccSettingsManager.AfterChange },
+				new ConfigSection { Key = "audio", Title = "Audio settings (steps, fades, markers)", File = "bcc-settings.json", Target = () => BccSettingsManager.Settings.Audio, Save = () => { BccSettingsManager.AfterChange(); BccAudio.ApplyLiveConfig(); },
+					Info = () => BccAudio.Unavailable() ?? $"{BccAudio.PlayableTracks.Count} track(s), {BccAudio.Sources.Count} source(s), audio table {BccAudio.AudioTableBytes() / 1024} KB. Range steps, volume steps and Enabled take effect after a restart." },
 				new ConfigSection { Key = "permbackup", Title = "Permission groups backup (game updates)", File = "bcc-settings.json", Target = () => BccSettingsManager.Settings.Permissions, Save = BccSettingsManager.AfterChange, Info = PermissionGroupsGuard.Status },
 				new ConfigSection { Key = "jail", Title = "Jail", File = "jail-config.json", Target = () => JailManager.jailConfig, Save = JailManager.Save, Help = JailHelp,
 					Unavailable = () => JailManager.validJail ? null : "No jail is set yet - set one with /setjail first (the jail config is only saved once a jail exists).",

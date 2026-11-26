@@ -72,6 +72,7 @@ namespace ColonyCommands {
 			AntiGrief.EnsureCommandInterceptorFirst();
 			EconomyManager.AfterWorldLoad();
 			HomesManager.AfterWorldLoad();
+			BccAudio.AfterWorldLoad();
 			RoleTestManager.AfterWorldLoad();
 			RoleIndex.CleanDuplicates();
 			RoleIndex.AfterWorldLoad();
@@ -91,6 +92,7 @@ namespace ColonyCommands {
 		{
 			EconomyManager.OnUpdate();
 			RoleTestManager.OnUpdate();
+			BccAudio.OnUpdate();
 
 		}
 
@@ -116,6 +118,7 @@ namespace ColonyCommands {
 		public void OnPlayerClicked(Players.Player player, PlayerClickedData click)
 		{
 			TransportCompatibility.OnPlayerClicked(player, click);
+			BccAudio.OnPlayerClicked(player, click);
 		}
 
 
@@ -144,6 +147,7 @@ namespace ColonyCommands {
 			RoleTestManager.OnPlayerConnectedLate(player);
 			RoleIndex.CleanDuplicates(player);
 			PermissionGroupsGuard.OnPlayerConnectedLate(player);
+			BccAudio.OnPlayerConnectedLate(player);
 		}
 
 
@@ -174,6 +178,7 @@ namespace ColonyCommands {
 			JailManager.OnPlayerDisconnected(player);
 			UiManager.OnPlayerDisconnected(player);
 			ProtectionNotices.OnPlayerDisconnected(player);
+			BccAudio.OnPlayerDisconnected(player);
 		}
 
 

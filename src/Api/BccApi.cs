@@ -15,8 +15,8 @@ namespace ColonyCommands
 	// See Dev\_Wissensbasis\06_BCC-API.md for the full guide.
 	public static class BccApi
 	{
-		// Bumped when methods are added. 1 = first version (BCC 1.1.0).
-		public const int ApiVersion = 1;
+		// Bumped when methods are added. 1 = first version (BCC 1.1.0), 2 = audio sources (BCC 1.2.0).
+		public const int ApiVersion = 2;
 
 		public static int GetApiVersion() => ApiVersion;
 
@@ -118,6 +118,44 @@ namespace ColonyCommands
 
 		// True if the player and the server allow window output for this command.
 		public static bool UsesWindowFor(Players.Player player, string command) => UiPreferences.UsesWindow(player, command);
+
+		// ------------------------------------------------------------------ audio sources (API 2)
+
+		// Names of all audio sources placed with /audio.
+		public static string[] GetAudioSourceNames() => BccAudio.Sources.ConvertAll(s => s.Name).ToArray();
+
+		// Starts an audio source like /audio play (ignores cooldown and time condition). player = the
+		// triggering player (only matters for sources whose audience is "only the triggering player"),
+		// may be null. Returns null on success, otherwise the reason.
+		public static string PlayAudioSource(string name, Players.Player player)
+		{
+			AudioSourceDef def = BccAudio.Find(name);
+			return def == null ? "unknown audio source" : BccAudio.Play(def, player);
+		}
+
+		// Stops what a trigger / PlayAudioSource started (with the source's fade-out).
+		public static bool StopAudioSource(string name)
+		{
+			AudioSourceDef def = BccAudio.Find(name);
+			if (def == null) {
+				return false;
+			}
+			BccAudio.Stop(def);
+			return true;
+		}
+
+		// Switches a source on or off.
+		public static bool SetAudioSourceEnabled(string name, bool enabled)
+		{
+			AudioSourceDef def = BccAudio.Find(name);
+			if (def == null) {
+				return false;
+			}
+			AudioSourceDef before = def.Clone();
+			def.Enabled = enabled;
+			BccAudio.Changed(def, before, null);
+			return true;
+		}
 
 		// ------------------------------------------------------------------ text helpers
 

@@ -111,6 +111,28 @@ namespace ColonyCommands
 				foreach (UiConfigPages.ConfigSection s in UiConfigPages.Sections()) {
 					Check($"UI config section '{s.Key}' builds", TryBuild(server, new UiManager.PageState { Kind = "configsection", Key = s.Key }, out string si), si);
 				}
+				// audio sources
+				report.Add($"   audio: active={BccAudio.IsActive} tracks={BccAudio.PlayableTracks.Count}/{BccAudio.AllTracks.Count()} sources={BccAudio.Sources.Count} files={BccAudio.TotalBytes / 1024} KB audio table={BccAudio.AudioTableBytes() / 1024} KB ({BccAudio.Unavailable() ?? "ok"})");
+				if (BccAudio.IsActive) {
+					AudioEngineConfig ac = BccAudio.EngineConfig;
+					foreach (string id in BccAudio.PlayableTracks) {
+						bool all3d = true, allFlat = true;
+						for (int lv = 0; lv < ac.LevelCount; lv++) {
+							for (int ri = 0; ri < ac.RangeSteps.Length; ri++) {
+								all3d &= BccAudio.TryClip(new VoiceSpec { Track = id, RangeIndex = ri, Level = lv }, out _);
+							}
+							allFlat &= BccAudio.TryClip(new VoiceSpec { Track = id, Flat = true, Level = lv }, out _);
+						}
+						Check($"audio track '{id}' registered in all {ac.RangeSteps.Length}x{ac.LevelCount} positional + {ac.LevelCount} area steps", all3d && allFlat);
+					}
+					Check("UI page 'audio' builds", TryBuild(server, new UiManager.PageState { Kind = "audio" }, out string ai), ai);
+					if (BccAudio.Sources.Count > 0) {
+						Check("UI page 'audiosrc' builds", TryBuild(server, new UiManager.PageState { Kind = "audiosrc", Key = BccAudio.Sources[0].Name }, out string asi), asi);
+					}
+					if (BccAudio.PlayableTracks.Count > 0) {
+						Check("UI page 'audiotrack' builds", TryBuild(server, new UiManager.PageState { Kind = "audiotrack", Key = BccAudio.PlayableTracks[0] }, out string ati), ati);
+					}
+				}
 				Check("UI page 'output' builds", TryBuild(server, new UiManager.PageState { Kind = "output", Title = "t", Lines = Enumerable.Range(1, 40).Select(i => "line " + i).ToList(), Page = 2 }, out string oi), oi);
 
 				// commands from the request file
@@ -260,6 +282,10 @@ namespace ColonyCommands
 							case "playerban": UiPlayerPages.BuildBanConfirm(p, state, menu); break;
 							case "trust": UiTrustPages.BuildTrust(p, state, menu); break;
 							case "trustplayer": UiTrustPages.BuildPlayer(p, state, menu); break;
+							case "audio": UiAudioPages.BuildList(p, state, menu); break;
+							case "audiosrc": UiAudioPages.BuildSource(p, state, menu); break;
+							case "audiotrack": UiAudioPages.BuildTrack(p, state, menu); break;
+							case "audiodelete": UiAudioPages.BuildDeleteConfirm(p, state, menu); break;
 						}
 					} catch (Exception e) {
 						result.Add("EXCEPTION " + e.Message);
@@ -505,6 +531,34 @@ namespace ColonyCommands
 					result.Add($"{rp.Name}: {RoleTestManager.DescribeEntry(rp)}; test={(rec == null ? "none" : rec.Role + " (" + RoleTestManager.SecondsLeft(rec) + " s left, saved roles " + string.Join(",", rec.Roles) + ", hadEntry=" + rec.HadEntry + ")")}");
 					break;
 				}
+				case "!audio": {
+					// !audio sim <x> <y> <z> <seconds> [source to fire after 1 s]  - simulated listener, every packet listed
+					// !audio fire <source> | stop <source> | status
+					string op = parts.Length > 1 ? parts[1] : "status";
+					if (op == "sim" && parts.Length >= 6
+						&& float.TryParse(parts[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float sx)
+						&& float.TryParse(parts[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float sy)
+						&& float.TryParse(parts[4], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float sz)
+						&& double.TryParse(parts[5], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double secs)) {
+						result.AddRange(BccAudio.Simulate(new AVec3(sx, sy, sz), secs, parts.Length > 6 ? parts[6] : null));
+					} else if ((op == "fire" || op == "stop") && parts.Length > 2) {
+						AudioSourceDef def = BccAudio.Find(parts[2]);
+						if (def == null) {
+							result.Add("unknown source");
+						} else if (op == "fire") {
+							result.Add(BccAudio.Play(def, null) ?? "started");
+						} else {
+							BccAudio.Stop(def);
+							result.Add("stopped");
+						}
+					} else {
+						foreach (AudioSourceDef def in BccAudio.Sources) {
+							result.Add($"{def.Name}: {BccAudio.Summary(def)} - {BccAudio.StateText(def)} @ {def.Position}");
+						}
+						result.Add($"{BccAudio.TotalVoices} voices, audio table {BccAudio.AudioTableBytes()} bytes");
+					}
+					break;
+				}
 				default:
 					result.Add("unknown directive");
 					break;
@@ -526,6 +580,9 @@ namespace ColonyCommands
 					break;
 				case NetworkUI.Items.Toggle t:
 					output.Add(indent + $"toggle {t.StorageIndexer}: {TextHelper.StripRichText(t.Label.text ?? "")}");
+					break;
+				case NetworkUI.Items.DropDownNoLabel dd:
+					output.Add(indent + $"dropdown {dd.StorageIndexer}: {string.Join(" | ", dd.Options)}");
 					break;
 				case NetworkUI.Items.FileIcon fi:
 					output.Add(indent + $"image file#{fi.FileID.value}");
@@ -592,6 +649,9 @@ namespace ColonyCommands
 					case "config": UiConfigPages.BuildSections(player, state, menu); break;
 					case "configsection": UiConfigPages.BuildSection(player, state, menu); break;
 					case "settings": UiPages.BuildSettings(player, state, menu); break;
+					case "audio": UiAudioPages.BuildList(player, state, menu); break;
+					case "audiosrc": UiAudioPages.BuildSource(player, state, menu); break;
+					case "audiotrack": UiAudioPages.BuildTrack(player, state, menu); break;
 				}
 				info = $"{menu.Items.Count} items, page {state.Page}, {state.RowKeys.Count} rows";
 				return menu.Items.Count > 0;

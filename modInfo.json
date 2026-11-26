@@ -1,15 +1,16 @@
 [
 {
 	"name" : "Better Colony Commands",
-	"description" : "Anti-grief protection, admin and player commands, windows (UI) for all commands, economy and an API for other mods.",
-	"version" : "1.1.1",
+	"description" : "Anti-grief protection, admin and player commands, windows (UI) for all commands, economy, audio sources and an API for other mods.",
+	"version" : "1.2.0",
 	"author" : "Kleator (originally Adrenalynn, Xell)",
 	"homepage" : "https://github.com/Kleator/BetterColonyCommands",
 	"previewimage" : "preview.png",
 	"longdescription" : [
 		"Anti-grief protection for spawn, banners and custom areas, jail, war, roleplay, announcements, chat colors, activity tracking, teleport and travel commands.",
 		"Since 1.1.0: every command in a window (/help), output windows with paging, admin configuration (/bcconfig), permission overview (/permissions), /modlist, /roletime, /roles, /rtp and an economy (/money, /pay, /baltop) that works together with Pytonia Automation and THE TRADER.",
-		"Other mods can register commands, permissions and use the economy through ColonyCommands.BccApi."
+		"Since 1.2.0: audio sources - admins place music and sounds (Ogg Vorbis files in the world's bcc-audio folder) in the world with range, volume, loop crossfade, fades, triggers and channels (/audio).",
+		"Other mods can register commands, permissions and use the economy and audio sources through ColonyCommands.BccApi."
 	],
 	"dllpath" : "ColonyCommands.dll",
 	"isoptional" : true,
@@ -21,6 +22,15 @@
 		"0.18.0.10"
 	],
 	"patchnotes": [
+		{ "version": "1.2.0", "notes": [
+				"new: audio sources (/audio, window, /bcconfig -> Audio sources) - music and sounds from Ogg Vorbis files in the world folder bcc-audio, placed in the world by admins",
+				"new: positional (3D) or area mode, range, volume, loop with crossfade, fade in/out, synced or per player, triggers (in range, enter, click, join, interval, daybreak, nightfall, time of day, manual), duration, cooldown, day/night, channels with priority for blending",
+				"new: only players in range get the sound; /audio show toggles markers with range rings (default off)",
+				"new: 'Sync with' - a source follows another one's timeline (same point in the music) with its own trigger and settings, for seamless hand-overs between areas",
+				"new: mp3/wav/m4a/flac files in bcc-audio are listed with how to convert them to Ogg Vorbis (the only format the game plays)",
+				"new: BccApi version 2 - GetAudioSourceNames, PlayAudioSource, StopAudioSource, SetAudioSourceEnabled"
+			]
+		},
 		{ "version": "1.1.1", "notes": [
 				"fixed: the role tag ({rolename:top} and next to player names) shows the real highest role again - the role tree decides, a base role that every time role inherits (e.g. the default role) only shows if the player has nothing above it"
 			]

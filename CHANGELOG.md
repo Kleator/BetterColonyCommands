@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.2.0
+
+### New: audio sources
+- Admins place music and sounds in the world (`/audio`, window also in `/bcconfig` → *Audio sources*, permission `mods.scarabol.commands.audio`) - lobby music at the spawn, bells, ambience. Tracks are the Ogg Vorbis files in the world folder `bcc-audio/` (registered at server start; every player downloads them once when joining).
+- Per source: **Positional** (3D, smooth fade with distance) or **Area** (same volume inside an inner radius, fading out towards the range), range (up to 4096 blocks - every positional source's exact range is prepared at server start, a range changed while running uses the nearest of the steps up to 1024 until the next restart), volume, loop with adjustable **crossfade** between end and start, **fade in / fade out**, synced ("radio") or from the start for each player, **triggers** (in range, enter a radius, right-click the block, join, interval, daybreak, nightfall, time of day, manual), who hears a triggered start (everyone in range / only the triggering player), duration, cooldown, day/night condition, and **channels with priority** for blending (only the best source of a channel is heard, the others fade out).
+- **Sync with**: a source follows another source's timeline (same point in the music, same loop rounds, triggered starts join there) while keeping its own trigger, track, volume, range and fades - for seamless hand-overs between areas (same channel). Loops are detected, renaming follows, deleting frees it.
+- Only players in range get anything - a source at the spawn is never sent to anyone elsewhere.
+- The game only plays Ogg Vorbis: mp3, wav, m4a, flac, ... files in `bcc-audio/` are listed in the window, in `/audio tracks` and in the server log with how to convert them (Audacity or ffmpeg; "already converted" if the .ogg is there; MIDI needs to be exported as audio first).
+- `/audio show` toggles markers (label + range ring) for yourself, default off. Chat commands for everything: `/audio add|remove|move|tp|play|stop|on|off|set|info|edit|tracks|near`.
+- Global settings in `bcc-settings.json` → `Audio` (range steps, volume steps, fade step time, markers, ...). `/bcreload` also reloads `bcc-audio.json`.
+- BccApi (API version 2): `GetAudioSourceNames`, `PlayAudioSource`, `StopAudioSource`, `SetAudioSourceEnabled`.
+- Self test: `!audio sim|fire|stop|status`, audio windows in `!ui`.
+
 ## 1.1.1
 
 ### Fixes
